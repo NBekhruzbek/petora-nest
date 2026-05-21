@@ -3,10 +3,10 @@ import { PetoraBatchService } from './petora-batch.service';
 
 @Controller()
 export class PetoraBatchController {
-  constructor(private readonly petoraBatchService: PetoraBatchService) {}
+	constructor(private readonly petoraBatchService: PetoraBatchService) {}
 
-  @Get()
-  getHello(): string {
-    return this.petoraBatchService.getHello();
-  }
+	@Get()
+	getHello(): string {
+		return this.petoraBatchService.getHello();
+	}
 }

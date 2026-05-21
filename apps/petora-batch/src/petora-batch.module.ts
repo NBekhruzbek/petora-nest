@@ -4,8 +4,8 @@ import { PetoraBatchService } from './petora-batch.service';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [ConfigModule.forRoot()],
-  controllers: [PetoraBatchController],
-  providers: [PetoraBatchService],
+	imports: [ConfigModule.forRoot()],
+	controllers: [PetoraBatchController],
+	providers: [PetoraBatchService],
 })
 export class PetoraBatchModule {}
