@@ -2,8 +2,24 @@ import { Module } from '@nestjs/common';
 import { MemberModule } from './member/member.module';
 import { ServiceModule } from './service/service.module';
 import { ProductModule } from './product/product.module';
+import { AuthModule } from './auth/auth.module';
+import { CommentModule } from './comment/comment.module';
+import { LikeModule } from './like/like.module';
+import { ViewModule } from './view/view.module';
+import { BoardArticleModule } from './board-article/board-article.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
-  imports: [MemberModule, ServiceModule, ProductModule]
+	imports: [
+		MemberModule,
+		AuthModule,
+		ProductModule,
+		ServiceModule,
+		BoardArticleModule,
+		ReviewModule,
+		CommentModule,
+		LikeModule,
+		ViewModule,
+	],
 })
 export class ComponentsModule {}
