@@ -30,3 +30,4 @@ export enum NotificationGroup {
 	BOOKINGS = 'BOOKINGS',
 	SYSTEM = 'SYSTEM',
 }
+registerEnumType(NotificationGroup, { name: 'NotificationGroup' });

@@ -39,7 +39,7 @@ const ProductSchema = new Schema(
 
 		productDesc: {
 			type: String,
-			requried: true,
+			required: true,
 		},
 
 		productBrand: {

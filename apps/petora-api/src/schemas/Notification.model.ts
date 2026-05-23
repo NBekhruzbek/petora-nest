@@ -1,4 +1,4 @@
-import { Schema, Types, model } from 'mongoose';
+import { Schema, Types } from 'mongoose';
 import { NotificationGroup, NotificationStatus, NotificationType } from '../libs/enums/notificationi.enum';
 
 const NotificationSchema = new Schema(
