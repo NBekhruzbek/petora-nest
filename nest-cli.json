@@ -1,32 +1,33 @@
 {
-  "$schema": "https://json.schemastore.org/nest-cli",
-  "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/petora-api/src",
-  "compilerOptions": {
-    "deleteOutDir": true,
-    "webpack": true,
-    "tsConfigPath": "apps/petora-api/tsconfig.app.json"
-  },
-  "monorepo": true,
-  "root": "apps/petora-api",
-  "projects": {
-    "petora-batch": {
-      "type": "application",
-      "root": "apps/petora-batch",
-      "entryFile": "main",
-      "sourceRoot": "apps/petora-batch/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/petora-batch/tsconfig.app.json"
-      }
-    },
-    "petora-nest": {
-      "type": "application",
-      "root": "apps/petora-api",
-      "entryFile": "main",
-      "sourceRoot": "apps/petora-api/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/petora-api/tsconfig.app.json"
-      }
-    }
-  }
+	"$schema": "https://json.schemastore.org/nest-cli",
+	"collection": "@nestjs/schematics",
+	"sourceRoot": "apps/petora-api/src",
+	"compilerOptions": {
+		"deleteOutDir": true,
+		"webpack": true,
+		"tsConfigPath": "apps/petora-api/tsconfig.app.json"
+	},
+	"monorepo": true,
+	"root": "apps/petora-api",
+	"projects": {
+		"petora-api": {
+			"type": "application",
+			"root": "apps/petora-api",
+			"entryFile": "main",
+			"sourceRoot": "apps/petora-api/src",
+			"compilerOptions": {
+				"tsConfigPath": "apps/petora-api/tsconfig.app.json"
+			}
+		},
+
+		"petora-batch": {
+			"type": "application",
+			"root": "apps/petora-batch",
+			"entryFile": "main",
+			"sourceRoot": "apps/petora-batch/src",
+			"compilerOptions": {
+				"tsConfigPath": "apps/petora-batch/tsconfig.app.json"
+			}
+		}
+	}
 }
