@@ -61,12 +61,10 @@ const MemberSchema = new Schema(
 
 		memberAddress: {
 			type: String,
-			default: '',
 		},
 
 		memberDesc: {
 			type: String,
-			default: '',
 		},
 
 		memberServices: {
@@ -81,12 +79,10 @@ const MemberSchema = new Schema(
 
 		memberLanguages: {
 			type: String,
-			default: '',
 		},
 
 		memberSpecialty: {
 			type: String,
-			default: '',
 		},
 
 		memberArticles: {
@@ -127,6 +123,10 @@ const MemberSchema = new Schema(
 		memberBlocks: {
 			type: Number,
 			default: 0,
+		},
+
+		deletedAt: {
+			type: Date,
 		},
 	},
 	{ timestamps: true, collection: 'members' },
