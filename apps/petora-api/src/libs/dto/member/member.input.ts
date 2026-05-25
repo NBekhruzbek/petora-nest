@@ -5,10 +5,6 @@ import { MemberAuthType, MemberType } from '../../enums/member.enum';
 @InputType()
 export class MemberInput {
 	@IsNotEmpty()
-	@Field(() => String)
-	memberFullName: string;
-
-	@IsNotEmpty()
 	@Length(3, 12)
 	@Field(() => String)
 	memberUserName: string;
