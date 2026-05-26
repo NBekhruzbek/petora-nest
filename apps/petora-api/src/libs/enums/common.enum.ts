@@ -7,7 +7,7 @@ export enum Message {
 	UPLOAD_FAILED = 'Upload failed!',
 	BAD_REQUEST = 'Bad Request',
 
-	USED_MEMBER_NICK_OR_PHONE = 'Already used member nick or phone!',
+	USED_MEMBER_NICK_OR_PHONE_OR_EMAIL = 'Already used member nick or phone or email!',
 	NO_USER_NAME = 'No member with that Username',
 	BLOCKED_USER = 'You have been blocked!',
 	WRONG_PASSWORD = 'Wrong password, please try again!',

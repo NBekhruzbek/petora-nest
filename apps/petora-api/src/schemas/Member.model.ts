@@ -40,7 +40,6 @@ const MemberSchema = new Schema(
 
 		memberFullName: {
 			type: String,
-			required: true,
 		},
 
 		memberPassword: {
