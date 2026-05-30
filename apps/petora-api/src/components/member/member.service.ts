@@ -49,6 +49,11 @@ export class MemberService {
 		return response;
 	}
 
+	public async checkUserName(memberUserName: string): Promise<boolean> {
+		const result = await this.memberModel.findOne({ memberUserName: memberUserName }).exec();
+		return !result;
+	}
+
 	public async updateMember(memberId: Types.ObjectId, input: MemberUpdate): Promise<Member> {
 		const result: Member = await this.memberModel
 			.findOneAndUpdate(

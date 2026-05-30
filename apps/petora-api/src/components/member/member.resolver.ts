@@ -48,6 +48,13 @@ export class MemberResolver {
 	}
 
 	@UseGuards(AuthGuard)
+	@Query(() => Boolean)
+	public async checkUserName(@Args('input') input: string): Promise<boolean> {
+		console.log('Query: checkUserName');
+		return this.memberService.checkUserName(input);
+	}
+
+	@UseGuards(AuthGuard)
 	@Mutation(() => Member)
 	public async updateMember(
 		@Args('input') input: MemberUpdate,
