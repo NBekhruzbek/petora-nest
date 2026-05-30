@@ -33,8 +33,11 @@ export class Member {
 	@Field(() => String)
 	memberImage: string;
 
-	@Field(() => Int)
-	memberExperience: number;
+	@Field(() => String, { nullable: true })
+	memberExperience?: string;
+
+	@Field(() => String, { nullable: true })
+	memberApproach?: string;
 
 	@Field(() => String, { nullable: true })
 	memberAddress?: string;
@@ -45,6 +48,9 @@ export class Member {
 	@Field(() => Int)
 	memberServices: number;
 
+	@Field(() => [String], { nullable: true })
+	memberServiceType?: string;
+
 	@Field(() => [String])
 	memberCertificates: string;
 
@@ -53,6 +59,12 @@ export class Member {
 
 	@Field(() => String, { nullable: true })
 	memberSpecialty?: string;
+
+	@Field(() => [String], { nullable: true })
+	memberServiceArea?: string;
+
+	@Field(() => String, { nullable: true })
+	memberResponseTime?: string;
 
 	@Field(() => Int)
 	memberArticles: number;
