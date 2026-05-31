@@ -11,6 +11,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { MemberType } from '../../libs/enums/member.enum';
 import { MemberUpdate } from '../../libs/dto/member/member.update';
 import { shapeIntoMongoObjectId } from '../../libs/config';
+import { WithoutGuard } from '../auth/guards/without.guard';
 
 @Resolver()
 export class MemberResolver {
@@ -48,7 +49,7 @@ export class MemberResolver {
 		return `Hi ${authMember.memberUserName}, you are ${authMember.memberType} (memberId: ${authMember._id}) `;
 	}
 
-	@UseGuards(AuthGuard)
+	@UseGuards(WithoutGuard)
 	@Query(() => Boolean)
 	public async checkUserName(@Args('input') input: string): Promise<boolean> {
 		console.log('Query: checkUserName');
@@ -66,11 +67,13 @@ export class MemberResolver {
 		return this.memberService.updateMember(memberId, input);
 	}
 
+	@UseGuards(WithoutGuard)
 	@Query(() => Member)
-	public async getMember(@Args('memberId') input: string): Promise<Member> {
+	public async getMember(@Args('memberId') input: string, @AuthMember('_id') memberId: string): Promise<Member> {
 		console.log('Query: getMember');
 		const targetId = shapeIntoMongoObjectId(input);
-		return this.memberService.getMember(targetId);
+		const viewerId = shapeIntoMongoObjectId(memberId);
+		return this.memberService.getMember(viewerId, targetId);
 	}
 
 	/** ADMIN */
