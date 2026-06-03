@@ -49,10 +49,10 @@ export class Member {
 	memberServices: number;
 
 	@Field(() => [String], { nullable: true })
-	memberServiceType?: string;
+	memberServiceTypes?: string[];
 
 	@Field(() => [String])
-	memberCertificates: string;
+	memberCertificates: string[];
 
 	@Field(() => String, { nullable: true })
 	memberLanguages?: string;
@@ -61,7 +61,7 @@ export class Member {
 	memberSpecialty?: string;
 
 	@Field(() => [String], { nullable: true })
-	memberServiceArea?: string;
+	memberServiceArea?: string[];
 
 	@Field(() => String, { nullable: true })
 	memberResponseTime?: string;
@@ -101,4 +101,19 @@ export class Member {
 
 	@Field(() => String, { nullable: true })
 	accessToken?: string;
+}
+
+@ObjectType()
+export class TotalCounter {
+	@Field(() => Int, { nullable: true })
+	total: number;
+}
+
+@ObjectType()
+export class Members {
+	@Field(() => [Member])
+	list: Member[];
+
+	@Field(() => [TotalCounter], { nullable: true })
+	metaCounter: TotalCounter[];
 }

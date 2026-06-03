@@ -71,6 +71,16 @@ const MemberSchema = new Schema(
 			default: 0,
 		},
 
+		memberServiceTypes: {
+			type: [String],
+			default: [],
+		},
+
+		memberServiceArea: {
+			type: [String],
+			default: [],
+		},
+
 		memberCertificates: {
 			type: [String],
 			default: [],

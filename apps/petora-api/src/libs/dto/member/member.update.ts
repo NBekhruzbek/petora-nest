@@ -66,11 +66,11 @@ export class MemberUpdate {
 
 	@IsOptional()
 	@Field(() => [String], { nullable: true })
-	memberServiceType?: string;
+	memberServiceTypes?: string[];
 
 	@IsOptional()
 	@Field(() => [String], { nullable: true })
-	memberCertificates?: string;
+	memberCertificates?: string[];
 
 	@IsOptional()
 	@Field(() => String, { nullable: true })
@@ -82,7 +82,7 @@ export class MemberUpdate {
 
 	@IsOptional()
 	@Field(() => [String], { nullable: true })
-	memberServiceArea?: string;
+	memberServiceArea?: string[];
 
 	@IsOptional()
 	@Field(() => String, { nullable: true })

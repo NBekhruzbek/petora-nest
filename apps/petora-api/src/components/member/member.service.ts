@@ -1,16 +1,17 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Member } from '../../libs/dto/member/member';
-import { LoginInput, MemberInput } from '../../libs/dto/member/member.input';
-import { MemberStatus } from '../../libs/enums/member.enum';
-import { Message } from '../../libs/enums/common.enum';
+import { Member, Members } from '../../libs/dto/member/member';
+import { AgentsInquiry, LoginInput, MemberInput } from '../../libs/dto/member/member.input';
+import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
+import { Direction, Message } from '../../libs/enums/common.enum';
 import { AuthService } from '../auth/auth.service';
 import { MemberUpdate } from '../../libs/dto/member/member.update';
 import { T } from '../../libs/types/common';
 import { ViewService } from '../view/view.service';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
+import { shapeIntoMongoObjectId } from '../../libs/config';
 
 @Injectable()
 export class MemberService {
@@ -100,7 +101,43 @@ export class MemberService {
 			}
 		}
 
+		// meLiked?
+
 		return targetMember;
+	}
+
+	public async getAgents(memberId: Types.ObjectId, input: AgentsInquiry): Promise<Members> {
+		const match: T = { memberType: MemberType.AGENT, memberStatus: MemberStatus.ACTIVE };
+		const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
+
+		this.shapeMatchQuery(match, input);
+
+		const result = await this.memberModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: sort },
+				{
+					$facet: {
+						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+		if (!result[0].list.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		return result[0];
+	}
+
+	private shapeMatchQuery(match: T, input: AgentsInquiry): void {
+		const { memberId, memberServiceTypes, memberServiceArea, text } = input.search;
+
+		if (memberId) match._id = shapeIntoMongoObjectId(memberId);
+
+		if (memberServiceTypes && memberServiceTypes.length) match.memberServiceTypes = { $in: memberServiceTypes };
+		if (memberServiceArea && memberServiceArea.length) match.memberServiceArea = { $in: memberServiceArea };
+
+		if (text) match.memberUserName = { $regex: new RegExp(text, 'i') };
 	}
 
 	public async getAllMembersByAdmin(): Promise<string> {
