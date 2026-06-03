@@ -107,8 +107,10 @@ export class MemberResolver {
 
 	// Authorization: ADMIN
 	@Roles(MemberType.ADMIN)
-	@Mutation(() => String)
-	public async updateMemberByAdmin(): Promise<string> {
-		return await this.memberService.updateMemberByAdmin();
+	@UseGuards(RolesGuard)
+	@Mutation(() => Member)
+	public async updateMemberByAdmin(@Args('input') input: MemberUpdate): Promise<Member> {
+		console.log('Mutation: updateMemberByAdmin');
+		return await this.memberService.updateMemberByAdmin(input);
 	}
 }
