@@ -166,6 +166,32 @@ export class MemberService {
 		return result[0];
 	}
 
+	public async getAllUsersByAdmin(input: MembersInquiry): Promise<Members> {
+		const { memberStatus, text } = input.search;
+		const match: T = { memberType: MemberType.USER };
+		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
+
+		if (memberStatus) match.memberStatus = memberStatus;
+		if (text) match.memberUserName = { $regex: new RegExp(text, 'i') };
+		console.log('match', match);
+
+		const result = await this.memberModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: sort },
+				{
+					$facet: {
+						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+
+		if (!result[0].list.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+		return result[0];
+	}
+
 	public async updateMemberByAdmin(): Promise<string> {
 		return 'updateMemberByAdmin executed';
 	}

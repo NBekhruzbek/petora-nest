@@ -92,8 +92,17 @@ export class MemberResolver {
 	@UseGuards(RolesGuard)
 	@Query(() => Members)
 	public async getAllAgentsByAdmin(@Args('input') input: MembersInquiry): Promise<Members> {
-		console.log('Query: getAllMembersByAdmin');
+		console.log('Query: getAllAgentsByAdmin');
 		return await this.memberService.getAllAgentsByAdmin(input);
+	}
+
+	// Authorization: ADMIN
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Query(() => Members)
+	public async getAllUsersByAdmin(@Args('input') input: MembersInquiry): Promise<Members> {
+		console.log('Query: getAllUsersByAdmin');
+		return await this.memberService.getAllUsersByAdmin(input);
 	}
 
 	// Authorization: ADMIN
