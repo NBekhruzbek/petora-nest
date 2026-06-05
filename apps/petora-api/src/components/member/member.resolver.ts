@@ -90,6 +90,13 @@ export class MemberResolver {
 		return await this.memberService.getMember(viewerId, targetId);
 	}
 
+	@UseGuards(AuthGuard)
+	@Query(() => MemberBillingInfos, { nullable: true })
+	public async getMemberBillingInfos(@AuthMember('_id') memberId: Types.ObjectId): Promise<MemberBillingInfos | null> {
+		console.log('Query: getMemberBillingInfos');
+		return await this.memberService.getMemberBillingInfos(memberId);
+	}
+
 	@UseGuards(WithoutGuard)
 	@Query(() => Members)
 	public async getAgents(

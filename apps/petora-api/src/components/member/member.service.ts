@@ -122,6 +122,10 @@ export class MemberService {
 		return targetMember;
 	}
 
+	public async getMemberBillingInfos(memberId: Types.ObjectId): Promise<MemberBillingInfos | null> {
+		return await this.billingModel.findOne({ memberId: memberId }).exec();
+	}
+
 	public async getAgents(memberId: Types.ObjectId, input: AgentsInquiry): Promise<Members> {
 		const match: T = { memberType: MemberType.AGENT, memberStatus: MemberStatus.ACTIVE };
 		const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
