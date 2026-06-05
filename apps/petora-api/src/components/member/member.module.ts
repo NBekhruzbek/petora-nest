@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import MemberSchema from '../../schemas/Member.model';
 import { AuthModule } from '../auth/auth.module';
 import { ViewModule } from '../view/view.module';
+import BillingSchema from '../../schemas/Billing.model';
 
 @Module({
 	imports: [
@@ -12,6 +13,10 @@ import { ViewModule } from '../view/view.module';
 			{
 				name: 'Member',
 				schema: MemberSchema,
+			},
+			{
+				name: 'Billing',
+				schema: BillingSchema,
 			},
 		]),
 		AuthModule,

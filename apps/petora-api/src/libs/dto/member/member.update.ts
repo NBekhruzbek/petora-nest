@@ -1,7 +1,8 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { IsEmail, IsNotEmpty, IsOptional, Length } from 'class-validator';
+import { IsCreditCard, IsEmail, IsIn, IsNotEmpty, IsOptional, IsPostalCode, Length } from 'class-validator';
 import { MemberAuthType, MemberStatus, MemberType } from '../../enums/member.enum';
 import { Types } from 'mongoose';
+import { availableCountries } from '../../config';
 
 @InputType()
 export class MemberUpdate {
@@ -27,7 +28,7 @@ export class MemberUpdate {
 	memberEmail?: string;
 
 	@IsOptional()
-	@Length(3, 12)
+	@Length(3, 15)
 	@Field(() => String, { nullable: true })
 	memberUserName?: string;
 
@@ -87,6 +88,42 @@ export class MemberUpdate {
 	@IsOptional()
 	@Field(() => String, { nullable: true })
 	memberResponseTime?: string;
+
+	deletedAt?: Date;
+}
+
+@InputType()
+export class MemberBillingUpdate {
+	@IsNotEmpty()
+	@Field(() => String)
+	memberId: Types.ObjectId;
+
+	/** BILLING ADDRESS */
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	companyName?: string;
+
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	vatNumber?: string;
+
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	address?: string;
+
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	city?: string;
+
+	@IsOptional()
+	@IsPostalCode('any')
+	@Field(() => String, { nullable: true })
+	zipCode?: string;
+
+	@IsOptional()
+	@IsIn(Object.values(availableCountries))
+	@Field(() => String, { nullable: true })
+	countryName?: string;
 
 	deletedAt?: Date;
 }

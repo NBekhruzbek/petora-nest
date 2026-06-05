@@ -9,7 +9,7 @@ import { ServiceLocation, ServiceType } from '../../enums/service.enum';
 @InputType()
 export class MemberInput {
 	@IsNotEmpty()
-	@Length(3, 12)
+	@Length(3, 15)
 	@Field(() => String)
 	memberUserName: string;
 
@@ -39,7 +39,7 @@ export class MemberInput {
 @InputType()
 export class LoginInput {
 	@IsNotEmpty()
-	@Length(3, 12)
+	@Length(3, 15)
 	@Field(() => String)
 	memberUserName: string;
 

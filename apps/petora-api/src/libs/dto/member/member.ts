@@ -117,3 +117,46 @@ export class Members {
 	@Field(() => [TotalCounter], { nullable: true })
 	metaCounter: TotalCounter[];
 }
+
+@ObjectType()
+export class MemberBillingInfos {
+	@Field(() => String)
+	memberId: Types.ObjectId;
+
+	billingKey: string;
+
+	@Field(() => String, { nullable: true })
+	last4?: string;
+
+	@Field(() => String, { nullable: true })
+	cardBrand?: string;
+
+	@Field(() => String, { nullable: true })
+	cardHolderName?: string;
+
+	@Field(() => String, { nullable: true })
+	expiryMonth?: string;
+
+	@Field(() => String, { nullable: true })
+	expiryYear?: string;
+
+	@Field(() => String, { nullable: true })
+	companyName?: string;
+
+	@Field(() => String, { nullable: true })
+	vatNumber?: string;
+
+	@Field(() => String, { nullable: true })
+	address?: string;
+
+	@Field(() => String, { nullable: true })
+	city?: string;
+
+	@Field(() => String, { nullable: true })
+	zipCode?: string;
+
+	@Field(() => String, { nullable: true })
+	countryName?: string;
+
+	deletedAt?: Date;
+}

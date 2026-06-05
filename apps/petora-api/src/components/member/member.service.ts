@@ -1,12 +1,12 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Member, Members } from '../../libs/dto/member/member';
+import { Member, MemberBillingInfos, Members } from '../../libs/dto/member/member';
 import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
 import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { AuthService } from '../auth/auth.service';
-import { MemberUpdate } from '../../libs/dto/member/member.update';
+import { MemberBillingUpdate, MemberUpdate } from '../../libs/dto/member/member.update';
 import { T } from '../../libs/types/common';
 import { ViewService } from '../view/view.service';
 import { ViewInput } from '../../libs/dto/view/view.input';
@@ -17,6 +17,7 @@ import { shapeIntoMongoObjectId } from '../../libs/config';
 export class MemberService {
 	constructor(
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
+		@InjectModel('Billing') private readonly billingModel: Model<MemberBillingInfos>,
 		private authService: AuthService,
 		private viewService: ViewService,
 	) {}
@@ -74,6 +75,21 @@ export class MemberService {
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 
 		result.accessToken = await this.authService.createToken(result);
+		return result;
+	}
+
+	public async updateMemberBillingInfos(
+		memberId: Types.ObjectId,
+		input: MemberBillingUpdate,
+	): Promise<MemberBillingInfos> {
+		const result: MemberBillingInfos = await this.billingModel
+			.findOneAndUpdate(
+				{ memberId: memberId },
+				{ $set: input, $setOnInsert: { memberId } },
+				{ upsert: true, new: true },
+			)
+			.exec();
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 		return result;
 	}
 

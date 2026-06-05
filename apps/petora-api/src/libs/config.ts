@@ -9,6 +9,18 @@ export const availableAgentSorts = [
 	'memberBooking',
 ];
 
+export const availableCountries = {
+	KR: 'South Korea',
+	US: 'United States',
+	GB: 'United Kingdom',
+	JP: 'Japan',
+	CA: 'Canada',
+	AU: 'Australia',
+	DE: 'Germany',
+	FR: 'France',
+	UZ: 'Uzbekistan',
+};
+
 /** IMAGE CONFIGURATION */
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';

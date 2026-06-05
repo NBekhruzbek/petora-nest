@@ -2,14 +2,14 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { MemberService } from './member.service';
 import { UseGuards } from '@nestjs/common';
 import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
-import { Member, Members } from '../../libs/dto/member/member';
+import { Member, MemberBillingInfos, Members } from '../../libs/dto/member/member';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { Types } from 'mongoose';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { MemberType } from '../../libs/enums/member.enum';
-import { MemberUpdate } from '../../libs/dto/member/member.update';
+import { MemberBillingUpdate, MemberUpdate } from '../../libs/dto/member/member.update';
 import { getSerialForImage, shapeIntoMongoObjectId, validMimeTypes } from '../../libs/config';
 import { WithoutGuard } from '../auth/guards/without.guard';
 import { GraphQLUpload, FileUpload } from 'graphql-upload';
@@ -68,6 +68,17 @@ export class MemberResolver {
 		console.log('Mutation: updateMember');
 		delete input._id;
 		return await this.memberService.updateMember(memberId, input);
+	}
+
+	@UseGuards(AuthGuard)
+	@Mutation(() => MemberBillingInfos)
+	public async updateMemberBillingInfos(
+		@Args('input') input: MemberBillingUpdate,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<MemberBillingInfos> {
+		console.log('Mutation: updateMemberBillingInfos');
+		delete input.memberId;
+		return await this.memberService.updateMemberBillingInfos(memberId, input);
 	}
 
 	@UseGuards(WithoutGuard)
