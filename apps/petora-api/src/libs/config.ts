@@ -9,6 +9,14 @@ export const availableAgentSorts = [
 	'memberBooking',
 ];
 
+export const availableProductSorts = [
+	'createdAt',
+	'productRating',
+	'productLikes',
+	'productSoldTimes',
+	'productPriceAfterDiscount',
+];
+
 export const availableCountries = {
 	KR: 'South Korea',
 	US: 'United States',

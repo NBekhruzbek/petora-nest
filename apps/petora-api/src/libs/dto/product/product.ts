@@ -64,3 +64,18 @@ export class Product {
 	@Field(() => Date)
 	updatedAt: Date;
 }
+
+@ObjectType()
+export class ProductTotalCounter {
+	@Field(() => Int, { nullable: true })
+	total: number;
+}
+
+@ObjectType()
+export class Products {
+	@Field(() => [Product])
+	list: Product[];
+
+	@Field(() => [ProductTotalCounter], { nullable: true })
+	metaCounter: ProductTotalCounter[];
+}

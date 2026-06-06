@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Product } from '../../libs/dto/product/product';
-import { ProductInput } from '../../libs/dto/product/product.input';
-import { Message } from '../../libs/enums/common.enum';
+import { Product, Products } from '../../libs/dto/product/product';
+import { ProductInput, ProductsInquiry } from '../../libs/dto/product/product.input';
+import { Direction, Message } from '../../libs/enums/common.enum';
 import { ProductUpdate } from '../../libs/dto/product/product.update';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { T } from '../../libs/types/common';
-import { ProductStatus } from '../../libs/enums/product.enum';
+import { ProductStatus, ProductType } from '../../libs/enums/product.enum';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { ViewService } from '../view/view.service';
@@ -98,6 +98,42 @@ export class ProductService {
 		} catch (err) {
 			console.log('Error, Product.model:', err instanceof Error ? err.message : err);
 			throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+		}
+	}
+
+	public async getProducts(memberId: Types.ObjectId, input: ProductsInquiry): Promise<Products> {
+		const match: T = { productStatus: ProductStatus.ACTIVE };
+		const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
+
+		this.shapeMatchQuery(match, input);
+
+		const result = await this.productModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: sort },
+				{
+					$facet: {
+						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+		if (!result[0].list.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		return result[0];
+	}
+
+	private shapeMatchQuery(match: T, input: ProductsInquiry): void {
+		const { priceRange, productPetType, productType, text } = input.search;
+		if (productPetType && productPetType.length) match.productPetType = { $in: productPetType };
+		if (productType && productType.length) match.productType = { $in: productType };
+		if (text) match.productName = { $regex: new RegExp(text, 'i') };
+
+		if (priceRange) {
+			match.productPriceAfterDiscount = {};
+			if (priceRange.min !== undefined) match.productPriceAfterDiscount.$gte = priceRange.min;
+			if (priceRange.max !== undefined) match.productPriceAfterDiscount.$lte = priceRange.max;
 		}
 	}
 }
