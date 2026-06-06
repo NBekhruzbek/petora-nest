@@ -6,6 +6,7 @@ import { MemberType } from '../../libs/enums/member.enum';
 import { UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Product } from '../../libs/dto/product/product';
+import { ProductUpdate } from '../../libs/dto/product/product.update';
 
 @Resolver()
 export class ProductResolver {
@@ -17,5 +18,13 @@ export class ProductResolver {
 	public async createProduct(@Args('input') input: ProductInput): Promise<Product> {
 		console.log('Mutation: createProduct');
 		return await this.productService.createProduct(input);
+	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation(() => Product)
+	public async updateProduct(@Args('input') input: ProductUpdate): Promise<Product> {
+		console.log('Mutation: updateProduct');
+		return await this.productService.updateProduct(input);
 	}
 }
