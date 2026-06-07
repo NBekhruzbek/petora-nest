@@ -29,7 +29,7 @@ export class ProductInput {
 	productImages: string[];
 
 	@IsNotEmpty()
-	@Length(3, 100)
+	@Length(3, 250)
 	@Field(() => String)
 	productShortDesc: string;
 
@@ -102,6 +102,10 @@ class PISearch {
 	@IsOptional()
 	@Field(() => [ProductType], { nullable: true })
 	productType?: ProductType[];
+
+	@IsOptional()
+	@Field(() => [ProductStatus], { nullable: true })
+	productStatus?: ProductStatus[];
 
 	@IsOptional()
 	@Field(() => String, { nullable: true })

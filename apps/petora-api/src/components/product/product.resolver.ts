@@ -50,4 +50,12 @@ export class ProductResolver {
 		console.log('Query: getProducts');
 		return await this.productService.getProducts(memberId, input);
 	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Query(() => Products)
+	public async getAllProductsByAdmin(@Args('input') input: ProductsInquiry): Promise<Products> {
+		console.log('Query: getAllProductsByAdmin');
+		return this.productService.getAllProductsByAdmin(input);
+	}
 }

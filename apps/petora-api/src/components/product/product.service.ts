@@ -136,4 +136,28 @@ export class ProductService {
 			if (priceRange.max !== undefined) match.productPriceAfterDiscount.$lte = priceRange.max;
 		}
 	}
+
+	public async getAllProductsByAdmin(input: ProductsInquiry): Promise<Products> {
+		const match: T = {};
+		if (input.search.productStatus?.length) match.productStatus = { $in: input.search.productStatus };
+		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
+
+		this.shapeMatchQuery(match, input);
+
+		const result = await this.productModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: sort },
+				{
+					$facet: {
+						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+		if (!result[0].list.length) return { list: [], metaCounter: [] };
+
+		return result[0];
+	}
 }

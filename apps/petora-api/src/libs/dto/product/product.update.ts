@@ -30,7 +30,7 @@ export class ProductUpdate {
 	productImages?: string[];
 
 	@IsOptional()
-	@Length(3, 100)
+	@Length(3, 250)
 	@Field(() => String, { nullable: true })
 	productShortDesc?: string;
 
