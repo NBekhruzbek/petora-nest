@@ -4,23 +4,24 @@ const OrderItemSchema = new Schema(
 	{
 		itemQuantity: {
 			type: Number,
-			default: 0,
+			required: true,
 		},
 
 		itemPrice: {
 			type: Number,
-			default: 0,
+			required: true,
 		},
 
-		itemDeliveryPrice: {
-			type: Number,
-			default: 0,
+		orderId: {
+			type: Types.ObjectId,
+			required: true,
+			ref: 'Order',
 		},
 
 		productId: {
 			type: Types.ObjectId,
 			required: true,
-			ref: 'products',
+			ref: 'Product',
 		},
 	},
 	{ timestamps: true, collection: 'orderItems' },

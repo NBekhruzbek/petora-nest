@@ -5,6 +5,7 @@ const OrderSchema = new Schema(
 	{
 		orderNumber: {
 			type: String,
+			required: true,
 		},
 
 		orderTotal: {
@@ -44,16 +45,10 @@ const OrderSchema = new Schema(
 			required: true,
 		},
 
-		orderItemsRefId: {
-			type: Types.ObjectId,
-			required: true,
-			ref: 'orderItems',
-		},
-
 		memberId: {
 			type: Types.ObjectId,
 			required: true,
-			ref: 'members',
+			ref: 'Member',
 		},
 	},
 	{ timestamps: true, collection: 'orders' },
