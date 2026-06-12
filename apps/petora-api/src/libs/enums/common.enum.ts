@@ -18,6 +18,7 @@ export enum Message {
 	ONLY_SPECIFIC_ROLES_ALLOWED = 'Allowed only for members with specific roles!',
 	NOT_ALLOWED_REQUEST = 'Not Allowed Request!',
 	PROVIDE_ALLOWED_FORMAT = 'Please provide jgp, jpeg or png images!',
+	NOT_USER_ADDRESS_OR_PHONE = 'Please check You entered deliveryAddress or your phone number in MyPage -> MyProfile -> PersonalInfo!',
 }
 
 export enum Direction {
