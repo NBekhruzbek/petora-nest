@@ -123,4 +123,76 @@ export class OrderService {
 		// If there is no data, return an empty list.
 		return result[0];
 	}
+
+	public async getAllOrdersByAdmin(input: OrdersInquiry): Promise<Orders> {
+		const match: any = {};
+		if (input.orderStatus) match.orderStatus = input.orderStatus;
+
+		const result = await this.orderModel
+			.aggregate([
+				{ $match: match },
+				{
+					$facet: {
+						list: [
+							{ $sort: { updatedAt: -1 } },
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+							{
+								$lookup: {
+									from: 'orderItems',
+									let: { orderId: '$_id' },
+									pipeline: [
+										{
+											$match: {
+												$expr: { $eq: ['$orderId', '$$orderId'] },
+											},
+										},
+										{
+											$lookup: {
+												from: 'products',
+												localField: 'productId',
+												foreignField: '_id',
+												as: 'productData',
+											},
+										},
+										{
+											$unwind: {
+												path: '$productData',
+												preserveNullAndEmptyArrays: true,
+											},
+										},
+									],
+									as: 'orderItems',
+								},
+							},
+							{
+								$lookup: {
+									from: 'members',
+									localField: 'memberId',
+									foreignField: '_id',
+									as: 'memberData',
+								},
+							},
+							{
+								$unwind: {
+									path: '$memberData',
+									preserveNullAndEmptyArrays: true,
+								},
+							},
+							{
+								$project: {
+									'memberData.memberPassword': 0,
+									'memberData.accessToken': 0,
+								},
+							},
+						],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+
+		// If there is no data, return an empty list.
+		return result[0];
+	}
 }

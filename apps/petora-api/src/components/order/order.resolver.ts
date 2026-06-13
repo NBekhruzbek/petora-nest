@@ -6,6 +6,9 @@ import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { OrderItemInput, OrdersInquiry } from '../../libs/dto/order/order.input';
 import { Order, Orders } from '../../libs/dto/order/order';
 import { shapeIntoMongoObjectId } from '../../libs/config';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { MemberType } from '../../libs/enums/member.enum';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Resolver()
 export class OrderResolver {
@@ -28,5 +31,13 @@ export class OrderResolver {
 		console.log('Query: getMyOrders');
 		const memberId = shapeIntoMongoObjectId(_id);
 		return this.orderService.getMyOrders(memberId, input);
+	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Query(() => Orders)
+	public async getAllOrdersByAdmin(@Args('input') input: OrdersInquiry): Promise<Orders> {
+		console.log('Query: getAllOrdersByAdmin');
+		return this.orderService.getAllOrdersByAdmin(input);
 	}
 }
