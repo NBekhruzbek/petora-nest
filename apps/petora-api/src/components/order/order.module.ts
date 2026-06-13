@@ -6,10 +6,10 @@ import OrderSchema from '../../schemas/Order.model';
 import OrderItemSchema from '../../schemas/OrderItem.model';
 import MemberSchema from '../../schemas/Member.model';
 import { AuthModule } from '../auth/auth.module';
+import { MemberModule } from '../member/member.module';
 
 @Module({
 	imports: [
-		AuthModule,
 		MongooseModule.forFeature([
 			{
 				name: 'Order',
@@ -24,6 +24,8 @@ import { AuthModule } from '../auth/auth.module';
 				schema: MemberSchema,
 			},
 		]),
+		AuthModule,
+		MemberModule,
 	],
 	providers: [OrderResolver, OrderService],
 })

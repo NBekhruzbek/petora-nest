@@ -23,5 +23,6 @@ import BillingSchema from '../../schemas/Billing.model';
 		ViewModule,
 	],
 	providers: [MemberResolver, MemberService],
+	exports: [MemberService],
 })
 export class MemberModule {}

@@ -217,4 +217,20 @@ export class MemberService {
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 		return result;
 	}
+
+	public async updateMemberPoint(memberId: Types.ObjectId, point: number): Promise<boolean> {
+		const result = await this.memberModel
+			.findByIdAndUpdate(
+				{
+					_id: memberId,
+					memberStatus: MemberStatus.ACTIVE,
+				},
+				{ $inc: { memberPoints: point } },
+				{ new: true },
+			)
+			.exec();
+
+		if (!result) return false;
+		return true;
+	}
 }

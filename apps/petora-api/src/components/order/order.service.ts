@@ -7,6 +7,7 @@ import { Message } from '../../libs/enums/common.enum';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { Member } from '../../libs/dto/member/member';
 import { OrderUpdateInput } from '../../libs/dto/order/order.update';
+import { MemberService } from '../member/member.service';
 
 @Injectable()
 export class OrderService {
@@ -14,6 +15,7 @@ export class OrderService {
 		@InjectModel('Order') private readonly orderModel: Model<Order>,
 		@InjectModel('OrderItem') private readonly orderItemModel: Model<OrderItemInput>,
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
+		private readonly memberService: MemberService,
 	) {}
 
 	public async createOrder(memberId: Types.ObjectId, input: OrderItemInput[]): Promise<Order> {
@@ -44,6 +46,8 @@ export class OrderService {
 
 			const orderId = newOrder._id;
 			await this.recordOrderItem(orderId, input);
+
+			await this.memberService.updateMemberPoint(memberId, 1);
 
 			return newOrder;
 		} catch (err) {
