@@ -9,6 +9,7 @@ import { shapeIntoMongoObjectId } from '../../libs/config';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { MemberType } from '../../libs/enums/member.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { OrderUpdateInput } from '../../libs/dto/order/order.update';
 
 @Resolver()
 export class OrderResolver {
@@ -39,5 +40,13 @@ export class OrderResolver {
 	public async getAllOrdersByAdmin(@Args('input') input: OrdersInquiry): Promise<Orders> {
 		console.log('Query: getAllOrdersByAdmin');
 		return this.orderService.getAllOrdersByAdmin(input);
+	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation(() => Order)
+	public async updateOrderByAdmin(@Args('input') input: OrderUpdateInput): Promise<Order> {
+		console.log('Mutation: updateOrderByAdmin');
+		return this.orderService.updateOrderByAdmin(input);
 	}
 }

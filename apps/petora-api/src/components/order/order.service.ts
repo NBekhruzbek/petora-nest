@@ -6,6 +6,7 @@ import { Order, Orders } from '../../libs/dto/order/order';
 import { Message } from '../../libs/enums/common.enum';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { Member } from '../../libs/dto/member/member';
+import { OrderUpdateInput } from '../../libs/dto/order/order.update';
 
 @Injectable()
 export class OrderService {
@@ -194,5 +195,16 @@ export class OrderService {
 
 		// If there is no data, return an empty list.
 		return result[0];
+	}
+
+	public async updateOrderByAdmin(input: OrderUpdateInput): Promise<Order> {
+		const orderId = shapeIntoMongoObjectId(input.orderId);
+
+		const result: Order = await this.orderModel
+			.findOneAndUpdate({ _id: orderId }, { orderStatus: input.orderStatus }, { new: true })
+			.exec();
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		return result;
 	}
 }
