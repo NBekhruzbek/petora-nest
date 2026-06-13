@@ -1,6 +1,7 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
-import { IsNotEmpty, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsOptional, Min } from 'class-validator';
 import { Types } from 'mongoose';
+import { OrderStatus } from '../../enums/order.enum';
 
 @InputType()
 export class OrderItemInput {
@@ -19,4 +20,21 @@ export class OrderItemInput {
 	@IsNotEmpty()
 	@Field(() => String)
 	productId: Types.ObjectId;
+}
+
+@InputType()
+export class OrdersInquiry {
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	page: number;
+
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	limit: number;
+
+	@IsOptional()
+	@Field(() => OrderStatus, { nullable: true })
+	orderStatus?: OrderStatus;
 }

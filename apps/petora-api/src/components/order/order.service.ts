@@ -1,8 +1,8 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { OrderItemInput } from '../../libs/dto/order/order.input';
-import { Order } from '../../libs/dto/order/order';
+import { OrderItemInput, OrdersInquiry } from '../../libs/dto/order/order.input';
+import { Order, Orders } from '../../libs/dto/order/order';
 import { Message } from '../../libs/enums/common.enum';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { Member } from '../../libs/dto/member/member';
@@ -70,5 +70,57 @@ export class OrderService {
 			console.log('Error, order.model', err instanceof Error ? err.message : err);
 			throw new InternalServerErrorException(Message.CREATE_FAILED);
 		}
+	}
+
+	public async getMyOrders(memberId: Types.ObjectId, input: OrdersInquiry): Promise<Orders> {
+		const match: any = { memberId };
+		if (input.orderStatus) match.orderStatus = input.orderStatus;
+
+		const result = await this.orderModel
+			.aggregate([
+				{ $match: match },
+				{
+					$facet: {
+						list: [
+							{ $sort: { updatedAt: -1 } },
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+							{
+								$lookup: {
+									from: 'orderItems',
+									let: { orderId: '$_id' },
+									pipeline: [
+										{
+											$match: {
+												$expr: { $eq: ['$orderId', '$$orderId'] },
+											},
+										},
+										{
+											$lookup: {
+												from: 'products',
+												localField: 'productId',
+												foreignField: '_id',
+												as: 'productData',
+											},
+										},
+										{
+											$unwind: {
+												path: '$productData',
+												preserveNullAndEmptyArrays: true,
+											},
+										},
+									],
+									as: 'orderItems',
+								},
+							},
+						],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+
+		// If there is no data, return an empty list.
+		return result[0];
 	}
 }

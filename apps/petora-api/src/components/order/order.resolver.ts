@@ -1,10 +1,10 @@
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { OrderService } from './order.service';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
-import { OrderItemInput } from '../../libs/dto/order/order.input';
-import { Order } from '../../libs/dto/order/order';
+import { OrderItemInput, OrdersInquiry } from '../../libs/dto/order/order.input';
+import { Order, Orders } from '../../libs/dto/order/order';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 
 @Resolver()
@@ -20,5 +20,13 @@ export class OrderResolver {
 		console.log('Mutation: createOrder');
 		const memberId = shapeIntoMongoObjectId(_id);
 		return this.orderService.createOrder(memberId, input);
+	}
+
+	@UseGuards(AuthGuard)
+	@Query(() => Orders)
+	public async getMyOrders(@Args('input') input: OrdersInquiry, @AuthMember('_id') _id: string): Promise<Orders> {
+		console.log('Query: getMyOrders');
+		const memberId = shapeIntoMongoObjectId(_id);
+		return this.orderService.getMyOrders(memberId, input);
 	}
 }
