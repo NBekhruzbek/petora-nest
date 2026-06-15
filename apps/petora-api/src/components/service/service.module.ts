@@ -3,6 +3,7 @@ import { ServiceResolver } from './service.resolver';
 import { ServiceService } from './service.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import ServiceSchema from '../../schemas/Service.model';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
 	imports: [
@@ -12,6 +13,7 @@ import ServiceSchema from '../../schemas/Service.model';
 				schema: ServiceSchema,
 			},
 		]),
+		AuthModule,
 	],
 	providers: [ServiceResolver, ServiceService],
 })

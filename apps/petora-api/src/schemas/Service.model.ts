@@ -31,8 +31,9 @@ const ServiceSchema = new Schema(
 			default: [],
 		},
 
-		serviceDuration: {
-			type: String,
+		serviceDurationMinutes: {
+			type: Number,
+			required: true,
 		},
 
 		serviceDescription: {
