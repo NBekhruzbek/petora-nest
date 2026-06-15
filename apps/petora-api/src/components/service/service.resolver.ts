@@ -35,4 +35,12 @@ export class ServiceResolver {
 		console.log('Mutation: updateService');
 		return await this.serviceService.updateService(memberId, input);
 	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation(() => Service)
+	public async updateServiceByAdmin(@Args('input') input: ServiceUpdate): Promise<Service> {
+		console.log('Mutation: updateServiceByAdmin');
+		return await this.serviceService.updateServiceByAdmin(input);
+	}
 }
