@@ -4,6 +4,7 @@ import { ServiceService } from './service.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import ServiceSchema from '../../schemas/Service.model';
 import { AuthModule } from '../auth/auth.module';
+import { ViewModule } from '../view/view.module';
 
 @Module({
 	imports: [
@@ -14,6 +15,7 @@ import { AuthModule } from '../auth/auth.module';
 			},
 		]),
 		AuthModule,
+		ViewModule,
 	],
 	providers: [ServiceResolver, ServiceService],
 })
