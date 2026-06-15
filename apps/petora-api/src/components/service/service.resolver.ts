@@ -8,6 +8,7 @@ import { ServiceInput } from '../../libs/dto/service/service.input';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { Types } from 'mongoose';
 import { Service } from '../../libs/dto/service/service';
+import { ServiceUpdate } from '../../libs/dto/service/service.update';
 
 @Resolver()
 export class ServiceResolver {
@@ -20,6 +21,18 @@ export class ServiceResolver {
 		@Args('input') input: ServiceInput,
 		@AuthMember('_id') memberId: Types.ObjectId,
 	): Promise<Service> {
+		console.log('Mutation: createService');
 		return await this.serviceService.createService(memberId, input);
+	}
+
+	@Roles(MemberType.AGENT)
+	@UseGuards(RolesGuard)
+	@Mutation(() => Service)
+	public async updateService(
+		@Args('input') input: ServiceUpdate,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<Service> {
+		console.log('Mutation: updateService');
+		return await this.serviceService.updateService(memberId, input);
 	}
 }
