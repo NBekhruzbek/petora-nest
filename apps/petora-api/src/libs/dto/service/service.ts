@@ -11,6 +11,9 @@ export class Service {
 	@Field(() => ServiceType)
 	serviceType: ServiceType;
 
+	@Field(() => String)
+	serviceTitle: string;
+
 	@Field(() => ServiceStatus)
 	serviceStatus: ServiceStatus;
 

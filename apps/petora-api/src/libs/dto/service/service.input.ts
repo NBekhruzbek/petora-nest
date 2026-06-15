@@ -9,6 +9,10 @@ export class ServiceInput {
 	@Field(() => ServiceType)
 	serviceType: ServiceType;
 
+	@IsNotEmpty()
+	@Field(() => String)
+	serviceTitle: string;
+
 	@IsOptional()
 	@Field(() => ServiceStatus, { nullable: true })
 	serviceStatus?: ServiceStatus;

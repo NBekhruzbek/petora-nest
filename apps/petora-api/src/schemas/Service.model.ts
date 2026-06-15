@@ -9,6 +9,11 @@ const ServiceSchema = new Schema(
 			required: true,
 		},
 
+		serviceTitle: {
+			type: String,
+			required: true,
+		},
+
 		serviceStatus: {
 			type: String,
 			enum: ServiceStatus,
