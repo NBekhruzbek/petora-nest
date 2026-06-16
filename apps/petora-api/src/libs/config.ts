@@ -17,6 +17,8 @@ export const availableProductSorts = [
 	'productPriceAfterDiscount',
 ];
 
+export const availableServiceSorts = ['createdAt', 'serviceRating', 'serviceLikes', 'mostBooked', 'servicePrice'];
+
 export const availableCountries = {
 	KR: 'South Korea',
 	US: 'United States',

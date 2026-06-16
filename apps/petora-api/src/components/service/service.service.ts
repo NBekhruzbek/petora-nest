@@ -1,9 +1,9 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Service } from '../../libs/dto/service/service';
-import { ServiceInput } from '../../libs/dto/service/service.input';
-import { Message } from '../../libs/enums/common.enum';
+import { Service, Services } from '../../libs/dto/service/service';
+import { ServiceInput, ServicesInquiry } from '../../libs/dto/service/service.input';
+import { Direction, Message } from '../../libs/enums/common.enum';
 import { ServiceUpdate } from '../../libs/dto/service/service.update';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { T } from '../../libs/types/common';
@@ -112,6 +112,43 @@ export class ServiceService {
 		} catch (err) {
 			console.log('Error, Service.model:', err instanceof Error ? err.message : err);
 			throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+		}
+	}
+
+	public async getAllServices(_id: string, input: ServicesInquiry): Promise<Services> {
+		const memberId = shapeIntoMongoObjectId(_id);
+		const match: T = { serviceStatus: ServiceStatus.ACTIVE };
+		const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
+
+		this.shapeMatchQuery(match, input);
+
+		const result = await this.serviceModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: sort },
+				{
+					$facet: {
+						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+		if (!result[0].list.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		return result[0];
+	}
+
+	private shapeMatchQuery(match: T, input: ServicesInquiry): void {
+		const { serviceType, serviceLocation, text, priceRange } = input.search;
+		if (serviceType && serviceType.length) match.serviceType = { $in: serviceType };
+		if (serviceLocation && serviceLocation.length) match.serviceLocation = { $in: serviceLocation };
+		if (text) match.serviceTitle = { $regex: new RegExp(text, 'i') };
+
+		if (priceRange) {
+			match.servicePrice = {};
+			if (priceRange.min !== undefined) match.servicePrice.$gte = priceRange.min;
+			if (priceRange.max !== undefined) match.servicePrice.$lte = priceRange.max;
 		}
 	}
 }

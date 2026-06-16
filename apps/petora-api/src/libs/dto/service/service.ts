@@ -1,6 +1,5 @@
 import { Types } from 'mongoose';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
-import { ProductPetType, ProductStatus, ProductType } from '../../enums/product.enum';
 import { ServiceLocation, ServiceStatus, ServiceType } from '../../enums/service.enum';
 
 @ObjectType()
@@ -52,4 +51,19 @@ export class Service {
 
 	@Field(() => Date)
 	updatedAt: Date;
+}
+
+@ObjectType()
+export class ServiceTotalCounter {
+	@Field(() => Int, { nullable: true })
+	total: number;
+}
+
+@ObjectType()
+export class Services {
+	@Field(() => [Service])
+	list: Service[];
+
+	@Field(() => [ServiceTotalCounter], { nullable: true })
+	metaCounter: ServiceTotalCounter[];
 }

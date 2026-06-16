@@ -4,10 +4,10 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { MemberType } from '../../libs/enums/member.enum';
 import { UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { ServiceInput } from '../../libs/dto/service/service.input';
+import { ServiceInput, ServicesInquiry } from '../../libs/dto/service/service.input';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { Types } from 'mongoose';
-import { Service } from '../../libs/dto/service/service';
+import { Service, Services } from '../../libs/dto/service/service';
 import { ServiceUpdate } from '../../libs/dto/service/service.update';
 import { WithoutGuard } from '../auth/guards/without.guard';
 import { shapeIntoMongoObjectId } from '../../libs/config';
@@ -53,5 +53,15 @@ export class ServiceResolver {
 		const targetId = shapeIntoMongoObjectId(input);
 		const viewerId = shapeIntoMongoObjectId(memberId);
 		return await this.serviceService.getService(viewerId, targetId);
+	}
+
+	@UseGuards(WithoutGuard)
+	@Query(() => Services)
+	public async getAllServices(
+		@Args('input') input: ServicesInquiry,
+		@AuthMember('_id') _id: string,
+	): Promise<Services> {
+		console.log('Query: getAllServices');
+		return await this.serviceService.getAllServices(_id, input);
 	}
 }
