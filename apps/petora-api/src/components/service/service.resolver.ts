@@ -64,4 +64,11 @@ export class ServiceResolver {
 		console.log('Query: getAllServices');
 		return await this.serviceService.getAllServices(_id, input);
 	}
+
+	@UseGuards(WithoutGuard)
+	@Query(() => [Service])
+	public async getRelatedServices(@Args('serviceId') input: string): Promise<Service[]> {
+		console.log('Query: getRelatedServices');
+		return await this.serviceService.getRelatedServices(input);
+	}
 }

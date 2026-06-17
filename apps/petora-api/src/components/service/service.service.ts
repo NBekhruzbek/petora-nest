@@ -7,7 +7,7 @@ import { Direction, Message } from '../../libs/enums/common.enum';
 import { ServiceUpdate } from '../../libs/dto/service/service.update';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { T } from '../../libs/types/common';
-import { ServiceStatus } from '../../libs/enums/service.enum';
+import { ServiceStatus, ServiceType } from '../../libs/enums/service.enum';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { ViewService } from '../view/view.service';
@@ -154,5 +154,28 @@ export class ServiceService {
 			if (priceRange.min !== undefined) match.servicePrice.$gte = priceRange.min;
 			if (priceRange.max !== undefined) match.servicePrice.$lte = priceRange.max;
 		}
+	}
+
+	public async getRelatedServices(input: string): Promise<Service[]> {
+		const serviceId = shapeIntoMongoObjectId(input);
+		const search: T = {
+			_id: serviceId,
+			serviceStatus: {
+				$in: [ServiceStatus.ACTIVE, ServiceStatus.PAUSE],
+			},
+		};
+		const targetService: Service = await this.serviceModel.findOne(search).exec();
+		if (!targetService) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		return this.serviceModel
+			.find({
+				_id: { $ne: serviceId },
+				serviceType: targetService.serviceType,
+				serviceStatus: ServiceStatus.ACTIVE,
+			})
+			.sort({ serviceLikes: -1 })
+			.limit(5)
+			.lean()
+			.exec();
 	}
 }
