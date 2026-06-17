@@ -58,4 +58,11 @@ export class ProductResolver {
 		console.log('Query: getAllProductsByAdmin');
 		return this.productService.getAllProductsByAdmin(input);
 	}
+
+	@UseGuards(WithoutGuard)
+	@Query(() => [Product])
+	public async getRelatedProducts(@Args('productId') input: string): Promise<Product[]> {
+		console.log('Query: getRelatedProducts');
+		return await this.productService.getRelatedProducts(input);
+	}
 }

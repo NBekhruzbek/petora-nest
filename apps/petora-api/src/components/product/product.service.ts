@@ -160,4 +160,27 @@ export class ProductService {
 
 		return result[0];
 	}
+
+	public async getRelatedProducts(input: string): Promise<Product[]> {
+		const productId = shapeIntoMongoObjectId(input);
+		const search: T = {
+			_id: productId,
+			productStatus: {
+				$in: [ProductStatus.ACTIVE, ProductStatus.PAUSE],
+			},
+		};
+		const targetProduct: Product = await this.productModel.findOne(search).exec();
+		if (!targetProduct) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		return this.productModel
+			.find({
+				_id: { $ne: productId },
+				productPetType: targetProduct.productPetType,
+				productStatus: ProductStatus.ACTIVE,
+			})
+			.sort({ productLikes: -1 })
+			.limit(5)
+			.lean()
+			.exec();
+	}
 }
