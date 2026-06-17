@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Service, Services } from '../../libs/dto/service/service';
@@ -11,12 +11,14 @@ import { ServiceStatus } from '../../libs/enums/service.enum';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { ViewService } from '../view/view.service';
+import { MemberService } from '../member/member.service';
 
 @Injectable()
 export class ServiceService {
 	constructor(
 		@InjectModel('Service') private readonly serviceModel: Model<Service>,
 		private viewService: ViewService,
+		private memberService: MemberService,
 	) {}
 
 	public async createService(memberId: Types.ObjectId, input: ServiceInput): Promise<Service> {
@@ -26,6 +28,8 @@ export class ServiceService {
 			const result: Service = await this.serviceModel.create(input);
 
 			if (!result) throw new InternalServerErrorException(Message.CREATE_FAILED);
+
+			await this.memberService.updateAgentServices(memberId, 1);
 
 			return result;
 		} catch (err) {

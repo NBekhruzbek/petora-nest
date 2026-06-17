@@ -233,4 +233,22 @@ export class MemberService {
 		if (!result) return false;
 		return true;
 	}
+
+	public async updateAgentServices(memberId: Types.ObjectId, number: number): Promise<boolean> {
+		if (number > 1 || number < -1) return false;
+
+		const result = await this.memberModel
+			.findByIdAndUpdate(
+				{
+					_id: memberId,
+					memberStatus: MemberStatus.ACTIVE,
+				},
+				{ $inc: { memberServices: number } },
+				{ new: true },
+			)
+			.exec();
+
+		if (!result) return false;
+		return true;
+	}
 }
