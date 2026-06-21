@@ -19,6 +19,7 @@ registerEnumType(BookingPaymentStatus, { name: 'BookingPaymentStatus' });
 export enum BookingPetType {
 	DOG = 'DOG',
 	CAT = 'CAT',
+	RABBIT = 'RABBIT',
 	BIRD = 'BIRD',
 	HAMSTER = 'HAMSTER',
 	OTHER = 'OTHER',

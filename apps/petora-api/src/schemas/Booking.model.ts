@@ -25,6 +25,11 @@ const BookingSchema = new Schema(
 			required: true,
 		},
 
+		bookingTime: {
+			type: String,
+			required: true,
+		},
+
 		bookingPrice: {
 			type: Number,
 			required: true,
@@ -37,6 +42,11 @@ const BookingSchema = new Schema(
 		},
 
 		bookingPetName: {
+			type: String,
+			required: true,
+		},
+
+		bookingPetAge: {
 			type: String,
 		},
 
@@ -67,6 +77,16 @@ const BookingSchema = new Schema(
 		},
 	},
 	{ timestamps: true, collection: 'bookings' },
+);
+
+BookingSchema.index(
+	{ agentId: 1, bookingDate: 1, bookingTime: 1 },
+	{
+		unique: true,
+		partialFilterExpression: {
+			bookingStatus: { $nin: [BookingStatus.CANCELLED, BookingStatus.REJECTED] },
+		},
+	},
 );
 
 export default BookingSchema;
