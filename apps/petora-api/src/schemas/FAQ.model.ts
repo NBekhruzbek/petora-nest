@@ -6,6 +6,7 @@ const FaqSchema = new Schema(
 		faqType: {
 			type: String,
 			enum: FaqType,
+			required: true,
 		},
 
 		faqStatus: {

@@ -12,7 +12,7 @@ const LikeSchema = new Schema(
 		memberId: {
 			type: Types.ObjectId,
 			required: true,
-			ref: 'members',
+			ref: 'Member',
 		},
 
 		likeRefId: {

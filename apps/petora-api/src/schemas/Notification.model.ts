@@ -1,5 +1,5 @@
 import { Schema, Types } from 'mongoose';
-import { NotificationGroup, NotificationStatus, NotificationType } from '../libs/enums/notificationi.enum';
+import { NotificationGroup, NotificationStatus, NotificationType } from '../libs/enums/notification.enum';
 
 const NotificationSchema = new Schema(
 	{
@@ -30,13 +30,13 @@ const NotificationSchema = new Schema(
 		authorId: {
 			type: Types.ObjectId,
 			required: true,
-			ref: 'members',
+			ref: 'Member',
 		},
 
 		receiverId: {
 			type: Types.ObjectId,
 			required: true,
-			ref: 'members',
+			ref: 'Member',
 		},
 	},
 	{ timestamps: true, collection: 'notifications' },

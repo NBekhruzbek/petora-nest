@@ -6,6 +6,7 @@ const NoticeSchema = new Schema(
 		noticeCategory: {
 			type: String,
 			enum: NoticeType,
+			required: true,
 		},
 
 		noticeTitle: {

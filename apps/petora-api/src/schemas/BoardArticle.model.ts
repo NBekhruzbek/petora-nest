@@ -6,6 +6,7 @@ const BoardArticleSchema = new Schema(
 		articleCategory: {
 			type: String,
 			enum: ArticleCategory,
+			required: true,
 		},
 
 		articleStatus: {
@@ -47,7 +48,7 @@ const BoardArticleSchema = new Schema(
 		memberId: {
 			type: Types.ObjectId,
 			required: true,
-			ref: 'members',
+			ref: 'Member',
 		},
 	},
 	{ timestamps: true, collection: 'boardArticles' },

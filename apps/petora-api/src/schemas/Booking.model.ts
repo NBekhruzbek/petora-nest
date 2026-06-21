@@ -17,7 +17,7 @@ const BookingSchema = new Schema(
 		bookingPaymentStatus: {
 			type: String,
 			enum: BookingPaymentStatus,
-			default: BookingPaymentStatus.PAID,
+			default: BookingPaymentStatus.UNPAID,
 		},
 
 		bookingDate: {
@@ -51,19 +51,19 @@ const BookingSchema = new Schema(
 		serviceId: {
 			type: Types.ObjectId,
 			required: true,
-			ref: 'services',
+			ref: 'Service',
 		},
 
 		userId: {
 			type: Types.ObjectId,
 			required: true,
-			ref: 'members',
+			ref: 'Member',
 		},
 
 		agentId: {
 			type: Types.ObjectId,
 			required: true,
-			ref: 'members',
+			ref: 'Member',
 		},
 	},
 	{ timestamps: true, collection: 'bookings' },
