@@ -20,5 +20,6 @@ import { MemberModule } from '../member/member.module';
 		MemberModule,
 	],
 	providers: [ServiceResolver, ServiceService],
+	exports: [ServiceService],
 })
 export class ServiceModule {}

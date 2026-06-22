@@ -7,6 +7,7 @@ export enum Message {
 	UPDATE_FAILED = 'Update failed!',
 	REMOVE_FAILED = 'Remove failed!',
 	UPLOAD_FAILED = 'Upload failed!',
+	BOOKING_FAILED = 'Booking failed!',
 	BAD_REQUEST = 'Bad Request',
 
 	USED_MEMBER_NICK_OR_PHONE_OR_EMAIL = 'Already used member nick or phone or email!',
@@ -19,6 +20,7 @@ export enum Message {
 	NOT_ALLOWED_REQUEST = 'Not Allowed Request!',
 	PROVIDE_ALLOWED_FORMAT = 'Please provide jgp, jpeg or png images!',
 	NOT_USER_ADDRESS_OR_PHONE = 'Please check You entered deliveryAddress or your phone number in MyPage -> MyProfile -> PersonalInfo!',
+	BOOKING_TIME_NOT_AVAILABLE = 'Please choose other time, this booking time is not available!',
 }
 
 export enum Direction {

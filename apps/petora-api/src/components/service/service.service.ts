@@ -178,4 +178,10 @@ export class ServiceService {
 			.lean()
 			.exec();
 	}
+
+	public async updateServiceBookingTimes(serviceId: Types.ObjectId, updatingNumber: number): Promise<Service> {
+		return await this.serviceModel
+			.findOneAndUpdate({ _id: serviceId }, { $inc: { serviceBookings: updatingNumber } }, { new: true })
+			.exec();
+	}
 }
