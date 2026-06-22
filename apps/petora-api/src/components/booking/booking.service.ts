@@ -64,6 +64,30 @@ export class BookingService {
 		return result;
 	}
 
+	public async updateBookingByAgent(agentId: Types.ObjectId, input: BookingUpdateInput): Promise<BookedInfo> {
+		if (input.bookingStatus === BookingStatus.CANCELLED)
+			throw new InternalServerErrorException(Message.NOT_ALLOWED_BOOKING_CANCEL);
+
+		const { bookingId, ...updateData } = input;
+
+		const search = {
+			agentId: agentId,
+			_id: bookingId,
+			bookingStatus: { $ne: BookingStatus.CANCELLED },
+		};
+
+		const result = await this.bookingModel.findOneAndUpdate(search, { $set: updateData }, { new: true }).exec();
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		if (result.bookingStatus === BookingStatus.REJECTED) {
+			await this.serviceService.updateServiceBookingTimes(result.serviceId, -1);
+		}
+
+		//TODO: IF BOOKING STATUS is REJECTED => REFOUNDING SERVICE PAYING
+
+		return result;
+	}
+
 	/** QUERIES */
 
 	public async getMyBookings(userId: string, input: BookingsInquiry): Promise<Bookings> {
