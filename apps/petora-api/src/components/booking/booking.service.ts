@@ -9,6 +9,7 @@ import { ServiceStatus } from '../../libs/enums/service.enum';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { BookingStatus } from '../../libs/enums/booking.enum';
 import { T } from '../../libs/types/common';
+import { BookingUpdateInput } from '../../libs/dto/booking/booking.update';
 
 @Injectable()
 export class BookingService {
@@ -37,6 +38,28 @@ export class BookingService {
 		const result = await this.bookingModel.create(input);
 
 		await this.serviceService.updateServiceBookingTimes(result.serviceId, 1);
+
+		return result;
+	}
+
+	public async updateBookingByUser(userId: Types.ObjectId, input: BookingUpdateInput): Promise<BookedInfo> {
+		if (input.bookingStatus !== BookingStatus.CANCELLED)
+			throw new InternalServerErrorException(Message.NOT_ALLOWED_REQUEST);
+
+		const { bookingId, ...updateData } = input;
+
+		const search = {
+			userId: userId,
+			_id: bookingId,
+			bookingStatus: BookingStatus.PENDING,
+		};
+
+		const result = await this.bookingModel.findOneAndUpdate(search, { $set: updateData }, { new: true }).exec();
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		await this.serviceService.updateServiceBookingTimes(result.serviceId, -1);
+
+		//TODO: REFOUNDING SERVICE PRICE
 
 		return result;
 	}

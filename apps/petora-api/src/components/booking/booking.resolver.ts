@@ -6,6 +6,7 @@ import { BookingInput, BookingsInquiry } from '../../libs/dto/booking/booking.in
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { BookedInfo, Bookings } from '../../libs/dto/booking/booking';
+import { BookingUpdateInput } from '../../libs/dto/booking/booking.update';
 
 @Resolver()
 export class BookingResolver {
@@ -20,6 +21,17 @@ export class BookingResolver {
 		console.log('Mutation: createNewBooking');
 		const userId = shapeIntoMongoObjectId(_id);
 		return await this.bookingService.createNewBooking(userId, input);
+	}
+
+	@UseGuards(AuthGuard)
+	@Mutation(() => BookedInfo)
+	public async updateBookingByUser(
+		@Args('input') input: BookingUpdateInput,
+		@AuthMember('_id') _id: String,
+	): Promise<BookedInfo> {
+		console.log('Mutation: updateBookingByUser');
+		const userId = shapeIntoMongoObjectId(_id);
+		return await this.bookingService.updateBookingByUser(userId, input);
 	}
 
 	@UseGuards(AuthGuard)
