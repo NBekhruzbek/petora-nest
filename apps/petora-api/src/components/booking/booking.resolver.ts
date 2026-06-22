@@ -1,11 +1,11 @@
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { BookingService } from './booking.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { UseGuards } from '@nestjs/common';
-import { BookingInput } from '../../libs/dto/booking/booking.input';
+import { BookingInput, BookingsInquiry } from '../../libs/dto/booking/booking.input';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { shapeIntoMongoObjectId } from '../../libs/config';
-import { BookedInfo } from '../../libs/dto/booking/booking';
+import { BookedInfo, Bookings } from '../../libs/dto/booking/booking';
 
 @Resolver()
 export class BookingResolver {
@@ -20,5 +20,15 @@ export class BookingResolver {
 		console.log('Mutation: createNewBooking');
 		const userId = shapeIntoMongoObjectId(_id);
 		return await this.bookingService.createNewBooking(userId, input);
+	}
+
+	@UseGuards(AuthGuard)
+	@Query(() => Bookings)
+	public async getMyBookings(
+		@Args('input') input: BookingsInquiry,
+		@AuthMember('_id') userId: string,
+	): Promise<Bookings> {
+		console.log('Query: getMyBookings');
+		return await this.bookingService.getMyBookings(userId, input);
 	}
 }

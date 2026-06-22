@@ -19,6 +19,8 @@ export const availableProductSorts = [
 
 export const availableServiceSorts = ['createdAt', 'serviceRating', 'serviceLikes', 'mostBooked', 'servicePrice'];
 
+export const availableBookingSorts = ['createdAt', 'updatedAt'];
+
 export const availableCountries = {
 	KR: 'South Korea',
 	US: 'United States',

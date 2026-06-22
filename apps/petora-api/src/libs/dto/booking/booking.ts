@@ -55,3 +55,18 @@ export class BookedInfo {
 	@Field(() => Date)
 	updatedAt: Date;
 }
+
+@ObjectType()
+export class BookingTotalCounter {
+	@Field(() => Int, { nullable: true })
+	total: number;
+}
+
+@ObjectType()
+export class Bookings {
+	@Field(() => [BookedInfo])
+	list: BookedInfo[];
+
+	@Field(() => [BookingTotalCounter], { nullable: true })
+	metaCounter?: BookingTotalCounter[];
+}
