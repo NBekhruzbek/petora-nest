@@ -102,7 +102,24 @@ export class BookingService {
 				{ $sort: sort },
 				{
 					$facet: {
-						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
+						list: [
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+							{
+								$lookup: {
+									from: 'services',
+									localField: 'serviceId',
+									foreignField: '_id',
+									as: 'serviceData',
+								},
+							},
+							{
+								$unwind: {
+									path: '$serviceData',
+									preserveNullAndEmptyArrays: true,
+								},
+							},
+						],
 						metaCounter: [{ $count: 'total' }],
 					},
 				},
