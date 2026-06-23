@@ -113,6 +113,46 @@ export class BookingService {
 		return result[0];
 	}
 
+	public async getAgentBookings(agentId: string, input: BookingsInquiry): Promise<Bookings> {
+		const match: T = { agentId: shapeIntoMongoObjectId(agentId) };
+		if (input.bookingStatus) match.bookingStatus = input.bookingStatus;
+
+		const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
+
+		const result = await this.bookingModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: sort },
+				{
+					$facet: {
+						list: [
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+							{
+								$lookup: {
+									from: 'services',
+									localField: 'serviceId',
+									foreignField: '_id',
+									as: 'serviceData',
+								},
+							},
+							{
+								$unwind: {
+									path: '$serviceData',
+									preserveNullAndEmptyArrays: true,
+								},
+							},
+						],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+
+		// If there is no data, return an empty list.
+		return result[0];
+	}
+
 	/** HELPERS **/
 
 	private async checkTimeSlotAvailability(

@@ -58,4 +58,15 @@ export class BookingResolver {
 		console.log('Query: getMyBookings');
 		return await this.bookingService.getMyBookings(userId, input);
 	}
+
+	@Roles(MemberType.AGENT)
+	@UseGuards(RolesGuard)
+	@Query(() => Bookings)
+	public async getAgentBookings(
+		@Args('input') input: BookingsInquiry,
+		@AuthMember('_id') agentId: string,
+	): Promise<Bookings> {
+		console.log('Query: getAgentBookings');
+		return await this.bookingService.getAgentBookings(agentId, input);
+	}
 }

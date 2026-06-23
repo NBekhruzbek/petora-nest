@@ -1,6 +1,7 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { Types } from 'mongoose';
 import { BookingPaymentStatus, BookingPetType, BookingStatus } from '../../enums/booking.enum';
+import { Service } from '../service/service';
 
 @ObjectType()
 export class BookedInfo {
@@ -42,6 +43,9 @@ export class BookedInfo {
 
 	@Field(() => String)
 	serviceId: Types.ObjectId;
+
+	@Field(() => Service, { nullable: true })
+	serviceData?: Service;
 
 	@Field(() => String)
 	userId: Types.ObjectId;
