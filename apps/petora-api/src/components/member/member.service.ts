@@ -24,6 +24,7 @@ export class MemberService {
 
 	public async signup(input: MemberInput): Promise<Member> {
 		input.memberPassword = await this.authService.hashPassword(input.memberPassword);
+		input.memberUserName = input.memberUserName.trim().toLowerCase();
 
 		try {
 			const result = await this.memberModel.create(input);
@@ -36,9 +37,11 @@ export class MemberService {
 	}
 
 	public async login(input: LoginInput): Promise<Member> {
-		const { memberUserName, memberPassword } = input;
+		const { memberPassword } = input;
+		input.memberUserName = input.memberUserName.trim().toLowerCase();
+
 		const response: Member = await this.memberModel
-			.findOne({ memberUserName: memberUserName })
+			.findOne({ memberUserName: input.memberUserName })
 			.select('+memberPassword')
 			.exec();
 
@@ -57,6 +60,7 @@ export class MemberService {
 	}
 
 	public async checkUserName(memberUserName: string): Promise<boolean> {
+		memberUserName = memberUserName.trim().toLowerCase();
 		const result = await this.memberModel.findOne({ memberUserName: memberUserName }).exec();
 		return !result;
 	}
