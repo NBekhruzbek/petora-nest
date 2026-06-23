@@ -133,6 +133,7 @@ export class BookingService {
 	public async getAgentBookings(agentId: string, input: BookingsInquiry): Promise<Bookings> {
 		const match: T = { agentId: shapeIntoMongoObjectId(agentId) };
 		if (input.bookingStatus) match.bookingStatus = input.bookingStatus;
+		if (input.text) match.bookingNumber = { $regex: new RegExp(input.text, 'i') };
 
 		const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
 

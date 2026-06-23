@@ -72,4 +72,8 @@ export class BookingsInquiry {
 	@IsOptional()
 	@Field(() => BookingStatus, { nullable: true })
 	bookingStatus?: BookingStatus;
+
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	text?: string;
 }
