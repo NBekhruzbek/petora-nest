@@ -1,7 +1,14 @@
 import { Schema, Types } from 'mongoose';
+import { QnaStatus } from '../libs/enums/qna.enum';
 
 const QnaSchema = new Schema(
 	{
+		qnaStatus: {
+			type: String,
+			enum: QnaStatus,
+			default: QnaStatus.ACTIVE,
+		},
+
 		questionTitle: {
 			type: String,
 			required: true,

@@ -1,11 +1,15 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { Member } from '../member/member';
 import { Types } from 'mongoose';
+import { QnaStatus } from '../../enums/qna.enum';
 
 @ObjectType()
 export class QnaQuestion {
 	@Field(() => String)
 	_id: Types.ObjectId;
+
+	@Field(() => String)
+	qnaStatus: QnaStatus;
 
 	@Field(() => String)
 	questionTitle: string;
