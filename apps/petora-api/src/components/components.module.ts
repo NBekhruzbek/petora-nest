@@ -10,6 +10,7 @@ import { BoardArticleModule } from './board-article/board-article.module';
 import { ReviewModule } from './review/review.module';
 import { OrderModule } from './order/order.module';
 import { BookingModule } from './booking/booking.module';
+import { QnaModule } from './qna/qna.module';
 
 @Module({
 	imports: [
@@ -24,6 +25,7 @@ import { BookingModule } from './booking/booking.module';
 		ViewModule,
 		OrderModule,
 		BookingModule,
+		QnaModule,
 	],
 })
 export class ComponentsModule {}
