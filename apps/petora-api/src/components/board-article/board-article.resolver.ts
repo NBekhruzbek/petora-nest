@@ -74,4 +74,15 @@ export class BoardArticleResolver {
 		console.log('Query: getAllBoardArticlesByAdmin');
 		return await this.boardArticleService.getAllBoardArticlesByAdmin(input);
 	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation((returns) => BoardArticle)
+	public async updateBoardArticleByAdmin(
+		@Args('input') input: BoardArticleUpdateInput,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<BoardArticle> {
+		console.log('Mutation: updateBoardArticleByAdmin');
+		return await this.boardArticleService.updateBoardArticleByAdmin(input);
+	}
 }

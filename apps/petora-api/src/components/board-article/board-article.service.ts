@@ -55,6 +55,27 @@ export class BoardArticleService {
 		return result;
 	}
 
+	public async updateBoardArticleByAdmin(input: BoardArticleUpdateInput): Promise<BoardArticle> {
+		const { articleId, articleStatus } = input;
+
+		const result = await this.boardArticleModel
+			.findOneAndUpdate({ _id: articleId, articleStatus: { $in: [ArticleStatus.ACTIVE, ArticleStatus.HIDE] } }, input, {
+				new: true,
+			})
+			.exec();
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		if (articleStatus === ArticleStatus.DELETE) {
+			await this.memberService.memberStatsEditor({
+				_id: result.memberId,
+				targetKey: 'memberArticles',
+				modifier: -1,
+			});
+		}
+
+		return result;
+	}
+
 	/** QUERIES**/
 
 	public async getBoardArticle(memberId: Types.ObjectId, articleId: Types.ObjectId): Promise<BoardArticle> {
