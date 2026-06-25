@@ -70,6 +70,9 @@ export class Member {
 	memberArticles: number;
 
 	@Field(() => Int)
+	memberQuestions: number;
+
+	@Field(() => Int)
 	memberPoints: number;
 
 	@Field(() => Int)
