@@ -5,6 +5,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { BoardArticle } from '../../libs/dto/boardArticle/article';
 import { BoardArticleInput } from '../../libs/dto/boardArticle/article.input';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
+import { BoardArticleUpdateInput } from '../../libs/dto/boardArticle/article.update';
 
 @Resolver()
 export class BoardArticleResolver {
@@ -18,5 +19,15 @@ export class BoardArticleResolver {
 	): Promise<BoardArticle> {
 		console.log('Mutation: createNewArticle');
 		return this.boardArticleService.createNewArticle(_id, input);
+	}
+
+	@UseGuards(AuthGuard)
+	@Mutation(() => BoardArticle)
+	public async updateArticle(
+		@Args('input') input: BoardArticleUpdateInput,
+		@AuthMember('_id') _id: string,
+	): Promise<BoardArticle> {
+		console.log('Mutation: updateArticle');
+		return this.boardArticleService.updateArticle(_id, input);
 	}
 }
