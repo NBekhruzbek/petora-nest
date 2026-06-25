@@ -2,7 +2,11 @@ import { BadRequestException, Injectable, InternalServerErrorException } from '@
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { BoardArticle, BoardArticles } from '../../libs/dto/boardArticle/article';
-import { BoardArticleInput, BoardArticlesInquiry } from '../../libs/dto/boardArticle/article.input';
+import {
+	AllBoardArticlesInquiry,
+	BoardArticleInput,
+	BoardArticlesInquiry,
+} from '../../libs/dto/boardArticle/article.input';
 import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { BoardArticleUpdateInput } from '../../libs/dto/boardArticle/article.update';
@@ -106,6 +110,37 @@ export class BoardArticleService {
 			])
 			.exec();
 		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		return result[0];
+	}
+
+	public async getAllBoardArticlesByAdmin(input: AllBoardArticlesInquiry): Promise<BoardArticles> {
+		const { articleStatus, articleCategory, text } = input.search;
+		const match: T = {};
+		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
+
+		if (articleStatus) match.articleStatus = articleStatus;
+		if (articleCategory) match.articleCategory = articleCategory;
+		if (text) match.articleTitle = { $regex: new RegExp(text, 'i') };
+
+		const result = await this.boardArticleModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: sort },
+				{
+					$facet: {
+						list: [
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+							lookupMember,
+							{ $unwind: '$memberData' },
+						],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+		if (!result.length) throw new BadRequestException(Message.NO_DATA_FOUND);
 
 		return result[0];
 	}
