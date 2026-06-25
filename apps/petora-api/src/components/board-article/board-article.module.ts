@@ -4,6 +4,8 @@ import { BoardArticleService } from './board-article.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import BoardArticleSchema from '../../schemas/BoardArticle.model';
 import { AuthModule } from '../auth/auth.module';
+import { ViewModule } from '../view/view.module';
+import { MemberModule } from '../member/member.module';
 
 @Module({
 	imports: [
@@ -14,6 +16,8 @@ import { AuthModule } from '../auth/auth.module';
 			},
 		]),
 		AuthModule,
+		ViewModule,
+		MemberModule,
 	],
 	providers: [BoardArticleResolver, BoardArticleService],
 })
