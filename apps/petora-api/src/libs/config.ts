@@ -21,6 +21,8 @@ export const availableServiceSorts = ['createdAt', 'serviceRating', 'serviceLike
 
 export const availableBookingSorts = ['createdAt', 'updatedAt'];
 
+export const availableBoardArticleSorts = ['createdAt', 'updatedAt', 'articleLikes', 'articleViews'];
+
 export const availableCountries = {
 	KR: 'South Korea',
 	US: 'United States',
@@ -45,4 +47,13 @@ export const getSerialForImage = (filename: string) => {
 
 export const shapeIntoMongoObjectId = (target: any) => {
 	return typeof target === 'string' ? new ObjectId(target) : target;
+};
+
+export const lookupMember = {
+	$lookup: {
+		from: 'members',
+		localField: 'memberId',
+		foreignField: '_id',
+		as: 'memberData',
+	},
 };

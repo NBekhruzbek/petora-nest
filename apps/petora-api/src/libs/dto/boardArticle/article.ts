@@ -1,7 +1,7 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { Types } from 'mongoose';
 import { ArticleCategory, ArticleStatus } from '../../enums/boardArticle.enum';
-import { Member } from '../member/member';
+import { Member, TotalCounter } from '../member/member';
 
 @ObjectType()
 export class BoardArticle {
@@ -43,4 +43,13 @@ export class BoardArticle {
 
 	@Field(() => Date)
 	updatedAt: Date;
+}
+
+@ObjectType()
+export class BoardArticles {
+	@Field(() => [BoardArticle])
+	list: BoardArticle[];
+
+	@Field(() => [TotalCounter], { nullable: true })
+	metaCounter: TotalCounter[];
 }
