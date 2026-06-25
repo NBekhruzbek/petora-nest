@@ -9,6 +9,8 @@ import { MemberService } from '../member/member.service';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { QnaStatus } from '../../libs/enums/qna.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
+import { QuestionUpdateInput } from '../../libs/dto/qna/qna.update';
+import { shapeIntoMongoObjectId } from '../../libs/config';
 
 @Injectable()
 export class QnaService {
@@ -31,6 +33,26 @@ export class QnaService {
 			targetKey: 'memberQuestions',
 			modifier: 1,
 		});
+
+		return result;
+	}
+
+	public async updateQuestion(memberId: Types.ObjectId, input: QuestionUpdateInput): Promise<QnaQuestion> {
+		input.memberId = memberId;
+		input.questionId = shapeIntoMongoObjectId(input.questionId);
+
+		const { questionId, ...updateData } = input;
+
+		const search = {
+			_id: questionId,
+			memberId: updateData.memberId,
+			qnaStatus: QnaStatus.ACTIVE,
+		};
+
+		const result: QnaQuestion = await this.qnaModel
+			.findOneAndUpdate(search, { $set: updateData }, { new: true })
+			.exec();
+		if (!result) throw new BadRequestException(Message.UPDATE_FAILED);
 
 		return result;
 	}

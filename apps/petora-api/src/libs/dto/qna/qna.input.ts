@@ -1,5 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { IsNotEmpty, IsOptional } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional } from 'class-validator';
 import { Types } from 'mongoose';
 
 @InputType()
@@ -13,6 +13,7 @@ export class QnaInput {
 	questionContent: string;
 
 	@IsOptional()
+	@IsArray()
 	@Field(() => [String], { nullable: true })
 	questionImages?: string[];
 

@@ -8,6 +8,7 @@ import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { Types } from 'mongoose';
 import { WithoutGuard } from '../auth/guards/without.guard';
 import { shapeIntoMongoObjectId } from '../../libs/config';
+import { QuestionUpdateInput } from '../../libs/dto/qna/qna.update';
 
 @Resolver()
 export class QnaResolver {
@@ -32,5 +33,15 @@ export class QnaResolver {
 		console.log('Query: getQuestion');
 		const questionId = shapeIntoMongoObjectId(input);
 		return await this.qnaService.getQuestion(memberId, questionId);
+	}
+
+	@UseGuards(AuthGuard)
+	@Mutation((returns) => QnaQuestion)
+	public async updateQuestion(
+		@Args('input') input: QuestionUpdateInput,
+		@AuthMember('_id') _id: Types.ObjectId,
+	): Promise<QnaQuestion> {
+		console.log('Mutation: updateQuestion');
+		return this.qnaService.updateQuestion(_id, input);
 	}
 }
