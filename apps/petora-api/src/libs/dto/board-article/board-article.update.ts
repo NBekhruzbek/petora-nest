@@ -29,5 +29,5 @@ export class BoardArticleUpdateInput {
 	@Field(() => String, { nullable: true })
 	articleImage?: string;
 
-	memberId: string;
+	memberId: Types.ObjectId;
 }

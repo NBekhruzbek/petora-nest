@@ -23,7 +23,7 @@ export class BoardArticleInput {
 	@Field(() => String)
 	articleImage: string;
 
-	memberId: string;
+	memberId: Types.ObjectId;
 }
 
 @InputType()

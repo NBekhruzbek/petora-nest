@@ -1,15 +1,15 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { BoardArticle, BoardArticles } from '../../libs/dto/boardArticle/article';
+import { BoardArticle, BoardArticles } from '../../libs/dto/board-article/board-article';
 import {
 	AllBoardArticlesInquiry,
 	BoardArticleInput,
 	BoardArticlesInquiry,
-} from '../../libs/dto/boardArticle/article.input';
+} from '../../libs/dto/board-article/board-article.input';
 import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { Direction, Message } from '../../libs/enums/common.enum';
-import { BoardArticleUpdateInput } from '../../libs/dto/boardArticle/article.update';
+import { BoardArticleUpdateInput } from '../../libs/dto/board-article/board-article.update';
 import { ArticleStatus } from '../../libs/enums/boardArticle.enum';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { ViewGroup } from '../../libs/enums/view.enum';
@@ -26,17 +26,23 @@ export class BoardArticleService {
 
 	/** MUTATIONS **/
 
-	public async createNewArticle(memberId: string, input: BoardArticleInput): Promise<BoardArticle> {
-		input.memberId = shapeIntoMongoObjectId(memberId);
+	public async createNewArticle(memberId: Types.ObjectId, input: BoardArticleInput): Promise<BoardArticle> {
+		input.memberId = memberId;
 
 		const result: BoardArticle = await this.boardArticleModel.create(input);
 		if (!result) throw new InternalServerErrorException(Message.CREATE_FAILED);
 
+		await this.memberService.memberStatsEditor({
+			_id: result.memberId,
+			targetKey: 'memberArticles',
+			modifier: 1,
+		});
+
 		return result;
 	}
 
-	public async updateArticle(memberId: string, input: BoardArticleUpdateInput): Promise<BoardArticle> {
-		input.memberId = shapeIntoMongoObjectId(memberId);
+	public async updateArticle(memberId: Types.ObjectId, input: BoardArticleUpdateInput): Promise<BoardArticle> {
+		input.memberId = memberId;
 		input.articleId = shapeIntoMongoObjectId(input.articleId);
 
 		const { articleId, ...updateData } = input;
