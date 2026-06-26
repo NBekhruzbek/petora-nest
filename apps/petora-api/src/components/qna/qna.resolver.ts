@@ -70,4 +70,15 @@ export class QnaResolver {
 		console.log('Query: getAllQuestionsByAdmin');
 		return await this.qnaService.getAllQuestionsByAdmin(input);
 	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation((returns) => QnaQuestion)
+	public async updateQnaQuestionByAdmin(
+		@Args('input') input: QuestionUpdateInput,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<QnaQuestion> {
+		console.log('Mutation: updateQnaQuestionByAdmin');
+		return await this.qnaService.updateQnaQuestionByAdmin(input);
+	}
 }

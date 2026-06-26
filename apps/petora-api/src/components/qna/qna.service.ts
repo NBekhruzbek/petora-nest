@@ -57,6 +57,27 @@ export class QnaService {
 		return result;
 	}
 
+	public async updateQnaQuestionByAdmin(input: QuestionUpdateInput): Promise<QnaQuestion> {
+		const { questionId, ...updateData } = input;
+
+		const result = await this.qnaModel
+			.findOneAndUpdate({ _id: questionId, qnaStatus: { $in: [QnaStatus.ACTIVE, QnaStatus.HIDE] } }, updateData, {
+				new: true,
+			})
+			.exec();
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		if (updateData.qnaStatus === QnaStatus.DELETE) {
+			await this.memberService.memberStatsEditor({
+				_id: result.memberId,
+				targetKey: 'memberQuestions',
+				modifier: -1,
+			});
+		}
+
+		return result;
+	}
+
 	/** QUERIES**/
 
 	public async getQuestion(memberId: Types.ObjectId, questionId: Types.ObjectId): Promise<QnaQuestion> {
