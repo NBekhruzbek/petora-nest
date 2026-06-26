@@ -1,6 +1,8 @@
-import { Field, InputType } from '@nestjs/graphql';
-import { IsArray, IsNotEmpty, IsOptional } from 'class-validator';
+import { Field, InputType, Int } from '@nestjs/graphql';
+import { IsArray, IsIn, IsNotEmpty, IsOptional, Min } from 'class-validator';
 import { Types } from 'mongoose';
+import { Direction } from '../../enums/common.enum';
+import { availableQnaSorts } from '../../config';
 
 @InputType()
 export class QnaInput {
@@ -18,4 +20,41 @@ export class QnaInput {
 	questionImages?: string[];
 
 	memberId: Types.ObjectId;
+}
+
+@InputType()
+class QnaISearch {
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	text?: string;
+
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	memberId?: Types.ObjectId;
+}
+
+@InputType()
+export class QnaQuestionInquiry {
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	page: number;
+
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	limit: number;
+
+	@IsOptional()
+	@IsIn(availableQnaSorts)
+	@Field(() => String, { nullable: true })
+	sort?: string;
+
+	@IsOptional()
+	@Field(() => Direction, { nullable: true })
+	direction?: Direction;
+
+	@IsNotEmpty()
+	@Field(() => QnaISearch)
+	search: QnaISearch;
 }

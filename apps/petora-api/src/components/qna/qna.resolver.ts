@@ -2,8 +2,8 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { QnaService } from './qna.service';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { QnaQuestion } from '../../libs/dto/qna/qna';
-import { QnaInput } from '../../libs/dto/qna/qna.input';
+import { QnaQuestion, QnaQuestions } from '../../libs/dto/qna/qna';
+import { QnaInput, QnaQuestionInquiry } from '../../libs/dto/qna/qna.input';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { Types } from 'mongoose';
 import { WithoutGuard } from '../auth/guards/without.guard';
@@ -43,5 +43,15 @@ export class QnaResolver {
 	): Promise<QnaQuestion> {
 		console.log('Mutation: updateQuestion');
 		return this.qnaService.updateQuestion(_id, input);
+	}
+
+	@UseGuards(WithoutGuard)
+	@Query((returns) => QnaQuestions)
+	public async getQuestions(
+		@Args('input') input: QnaQuestionInquiry,
+		@AuthMember('_id') memberId: Types.ObjectId | null,
+	): Promise<QnaQuestions> {
+		console.log('Query: getQuestions');
+		return await this.qnaService.getQuestions(memberId, input);
 	}
 }

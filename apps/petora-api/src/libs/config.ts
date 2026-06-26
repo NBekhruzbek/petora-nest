@@ -23,6 +23,8 @@ export const availableBookingSorts = ['createdAt', 'updatedAt'];
 
 export const availableBoardArticleSorts = ['createdAt', 'updatedAt', 'articleLikes', 'articleViews'];
 
+export const availableQnaSorts = ['createdAt', 'updatedAt', 'questionAnswers', 'questionViews', 'questionLikes'];
+
 export const availableCountries = {
 	KR: 'South Korea',
 	US: 'United States',

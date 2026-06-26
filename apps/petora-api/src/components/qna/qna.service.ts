@@ -2,15 +2,15 @@ import { BadRequestException, Injectable, InternalServerErrorException } from '@
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ViewService } from '../view/view.service';
-import { QnaInput } from '../../libs/dto/qna/qna.input';
-import { QnaQuestion } from '../../libs/dto/qna/qna';
-import { Message } from '../../libs/enums/common.enum';
+import { QnaInput, QnaQuestionInquiry } from '../../libs/dto/qna/qna.input';
+import { QnaQuestion, QnaQuestions } from '../../libs/dto/qna/qna';
+import { Direction, Message } from '../../libs/enums/common.enum';
 import { MemberService } from '../member/member.service';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { QnaStatus } from '../../libs/enums/qna.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { QuestionUpdateInput } from '../../libs/dto/qna/qna.update';
-import { shapeIntoMongoObjectId } from '../../libs/config';
+import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 
 @Injectable()
 export class QnaService {
@@ -81,6 +81,42 @@ export class QnaService {
 
 		targetQuestion.memberData = await this.memberService.getMember(null, targetQuestion.memberId);
 		return targetQuestion;
+	}
+
+	public async getQuestions(memberId: Types.ObjectId, input: QnaQuestionInquiry): Promise<QnaQuestions> {
+		const { text } = input.search;
+		const match: T = { qnaStatus: QnaStatus.ACTIVE };
+		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
+
+		if (text)
+			match.$or = [
+				{ questionTitle: { $regex: new RegExp(text, 'i') } },
+				{ questionContent: { $regex: new RegExp(text, 'i') } },
+			];
+		if (input.search?.memberId) {
+			match.memberId = shapeIntoMongoObjectId(input.search.memberId);
+		}
+
+		const result = await this.qnaModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: sort },
+				{
+					$facet: {
+						list: [
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+							lookupMember,
+							{ $unwind: '$memberData' },
+						],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		return result[0];
 	}
 
 	/** HELPERS **/

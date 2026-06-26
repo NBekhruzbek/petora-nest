@@ -1,5 +1,5 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
-import { Member } from '../member/member';
+import { Member, TotalCounter } from '../member/member';
 import { Types } from 'mongoose';
 import { QnaStatus } from '../../enums/qna.enum';
 
@@ -40,4 +40,13 @@ export class QnaQuestion {
 
 	@Field(() => Date)
 	updatedAt: Date;
+}
+
+@ObjectType()
+export class QnaQuestions {
+	@Field(() => [QnaQuestion])
+	list: QnaQuestion[];
+
+	@Field(() => [TotalCounter], { nullable: true })
+	metaCounter: TotalCounter[];
 }
