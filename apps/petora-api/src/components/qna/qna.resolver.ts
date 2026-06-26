@@ -3,12 +3,15 @@ import { QnaService } from './qna.service';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { QnaQuestion, QnaQuestions } from '../../libs/dto/qna/qna';
-import { QnaInput, QnaQuestionInquiry } from '../../libs/dto/qna/qna.input';
+import { AllQnaQuestionsInquiry, QnaInput, QnaQuestionInquiry } from '../../libs/dto/qna/qna.input';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { Types } from 'mongoose';
 import { WithoutGuard } from '../auth/guards/without.guard';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { QuestionUpdateInput } from '../../libs/dto/qna/qna.update';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { MemberType } from '../../libs/enums/member.enum';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Resolver()
 export class QnaResolver {
@@ -53,5 +56,18 @@ export class QnaResolver {
 	): Promise<QnaQuestions> {
 		console.log('Query: getQuestions');
 		return await this.qnaService.getQuestions(memberId, input);
+	}
+
+	/** ADMIN */
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Query((returns) => QnaQuestions)
+	public async getAllQuestionsByAdmin(
+		@Args('input') input: AllQnaQuestionsInquiry,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<QnaQuestions> {
+		console.log('Query: getAllQuestionsByAdmin');
+		return await this.qnaService.getAllQuestionsByAdmin(input);
 	}
 }
