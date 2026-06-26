@@ -78,6 +78,14 @@ export class QnaService {
 		return result;
 	}
 
+	public async removeQnaQuestionByAdmin(questionId: Types.ObjectId): Promise<QnaQuestion> {
+		const search: T = { _id: questionId, qnaStatus: QnaStatus.DELETE };
+		const result = await this.qnaModel.findOneAndDelete(search).exec();
+		if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
+
+		return result;
+	}
+
 	/** QUERIES**/
 
 	public async getQuestion(memberId: Types.ObjectId, questionId: Types.ObjectId): Promise<QnaQuestion> {

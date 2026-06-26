@@ -81,4 +81,16 @@ export class QnaResolver {
 		console.log('Mutation: updateQnaQuestionByAdmin');
 		return await this.qnaService.updateQnaQuestionByAdmin(input);
 	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation((returns) => QnaQuestion)
+	public async removeQnaQuestionByAdmin(
+		@Args('questionId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<QnaQuestion> {
+		console.log('Mutation: removeQnaQuestionByAdmin');
+		const questionId = shapeIntoMongoObjectId(input);
+		return await this.qnaService.removeQnaQuestionByAdmin(questionId);
+	}
 }
