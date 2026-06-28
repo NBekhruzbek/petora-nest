@@ -7,11 +7,16 @@ import { Model, Types } from 'mongoose';
 import { FaqUpdateInput } from '../../libs/dto/faq/faq.update';
 import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { FaqStatus } from '../../libs/enums/faq.enum';
-import { T } from '../../libs/types/common';
+import { StatisticModifier, T } from '../../libs/types/common';
+import { ViewGroup } from '../../libs/enums/view.enum';
+import { ViewService } from '../view/view.service';
 
 @Injectable()
 export class FaqService {
-	constructor(@InjectModel('FAQ') private readonly faqModel: Model<FaqDetail>) {}
+	constructor(
+		@InjectModel('FAQ') private readonly faqModel: Model<FaqDetail>,
+		private readonly viewService: ViewService,
+	) {}
 
 	/** MUTATIONS **/
 	public async createNewFaq(memberId: Types.ObjectId, input: FaqInput): Promise<FaqDetail> {
@@ -41,6 +46,27 @@ export class FaqService {
 	}
 
 	/** QUERIES **/
+
+	public async getFaqDetail(memberId: Types.ObjectId, faqId: Types.ObjectId): Promise<FaqDetail> {
+		const search: T = {
+			_id: faqId,
+			faqStatus: FaqStatus.ACTIVE,
+		};
+
+		const result: FaqDetail = await this.faqModel.findOne(search).lean().exec();
+		if (!result) throw new BadRequestException(Message.NO_DATA_FOUND);
+
+		if (memberId) {
+			const viewInput = { memberId: memberId, viewRefId: faqId, viewGroup: ViewGroup.FAQ };
+			const newView = await this.viewService.recordView(viewInput);
+			if (newView) {
+				await this.faqStatsEditor({ _id: faqId, targetKey: 'faqViews', modifier: 1 });
+				result.faqViews++;
+			}
+		}
+
+		return result;
+	}
 
 	public async getAllFaqsByAdmin(input: FaqsInquiry): Promise<Faqs> {
 		const { text } = input.search;
@@ -90,5 +116,22 @@ export class FaqService {
 		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		return result[0];
+	}
+
+	/** HELPERS **/
+
+	public async faqStatsEditor(input: StatisticModifier): Promise<FaqDetail> {
+		const { _id, targetKey, modifier } = input;
+		return await this.faqModel
+			.findByIdAndUpdate(
+				_id,
+				{
+					$inc: { [targetKey]: modifier },
+				},
+				{
+					new: true,
+				},
+			)
+			.exec();
 	}
 }

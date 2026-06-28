@@ -25,6 +25,11 @@ const FaqSchema = new Schema(
 			required: true,
 		},
 
+		faqViews: {
+			type: Number,
+			default: 0,
+		},
+
 		memberId: {
 			type: Types.ObjectId,
 			required: true,

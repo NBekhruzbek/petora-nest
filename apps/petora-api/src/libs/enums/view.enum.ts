@@ -6,5 +6,6 @@ export enum ViewGroup {
 	PRODUCT = 'PRODUCT',
 	ARTICLE = 'ARTICLE',
 	QNA = 'QNA',
+	FAQ = 'FAQ',
 }
 registerEnumType(ViewGroup, { name: 'ViewGroup' });

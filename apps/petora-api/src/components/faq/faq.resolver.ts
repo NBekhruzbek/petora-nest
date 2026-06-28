@@ -10,6 +10,7 @@ import { FaqDetail, Faqs } from '../../libs/dto/faq/faq';
 import { Types } from 'mongoose';
 import { FaqUpdateInput } from '../../libs/dto/faq/faq.update';
 import { WithoutGuard } from '../auth/guards/without.guard';
+import { shapeIntoMongoObjectId } from '../../libs/config';
 
 @Resolver()
 export class FaqResolver {
@@ -51,6 +52,17 @@ export class FaqResolver {
 	}
 
 	/** MEMBER **/
+
+	@UseGuards(WithoutGuard)
+	@Query((returns) => FaqDetail)
+	public async getFaqDetail(
+		@Args('faqId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId | null,
+	): Promise<FaqDetail> {
+		console.log('Query: getFaqDetail');
+		const faqId = shapeIntoMongoObjectId(input);
+		return await this.faqService.getFaqDetail(memberId, faqId);
+	}
 
 	@UseGuards(WithoutGuard)
 	@Query((returns) => Faqs)

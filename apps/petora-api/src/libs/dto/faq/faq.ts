@@ -1,4 +1,4 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { Types } from 'mongoose';
 import { FaqStatus, FaqType } from '../../enums/faq.enum';
 import { TotalCounter } from '../member/member';
@@ -19,6 +19,9 @@ export class FaqDetail {
 
 	@Field(() => String)
 	faqContent: string;
+
+	@Field(() => Int)
+	faqViews: number;
 
 	@Field(() => String)
 	memberId: Types.ObjectId;
