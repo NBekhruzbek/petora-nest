@@ -1,4 +1,4 @@
-import { Schema } from 'mongoose';
+import { Schema, Types } from 'mongoose';
 import { FaqStatus, FaqType } from '../libs/enums/faq.enum';
 
 const FaqSchema = new Schema(
@@ -23,6 +23,12 @@ const FaqSchema = new Schema(
 		faqContent: {
 			type: String,
 			required: true,
+		},
+
+		memberId: {
+			type: Types.ObjectId,
+			required: true,
+			ref: 'Member',
 		},
 	},
 	{ timestamps: true, collection: 'faqs' },
