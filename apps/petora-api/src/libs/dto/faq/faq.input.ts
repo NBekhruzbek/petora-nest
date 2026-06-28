@@ -1,7 +1,9 @@
-import { Field, InputType } from '@nestjs/graphql';
-import { IsNotEmpty } from 'class-validator';
+import { Field, InputType, Int } from '@nestjs/graphql';
+import { IsIn, IsNotEmpty, IsOptional, Min } from 'class-validator';
 import { FaqStatus, FaqType } from '../../enums/faq.enum';
 import { Types } from 'mongoose';
+import { availableFaqSorts } from '../../config';
+import { Direction } from '../../enums/common.enum';
 
 @InputType()
 export class FaqInput {
@@ -22,4 +24,37 @@ export class FaqInput {
 	faqContent: string;
 
 	memberId: Types.ObjectId;
+}
+
+@InputType()
+class FaqISearch {
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	text?: string;
+}
+
+@InputType()
+export class FaqsInquiry {
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	page: number;
+
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	limit: number;
+
+	@IsOptional()
+	@IsIn(availableFaqSorts)
+	@Field(() => String, { nullable: true })
+	sort?: string;
+
+	@IsOptional()
+	@Field(() => Direction, { nullable: true })
+	direction?: Direction;
+
+	@IsNotEmpty()
+	@Field(() => FaqISearch)
+	search: FaqISearch;
 }

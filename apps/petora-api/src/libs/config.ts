@@ -25,6 +25,8 @@ export const availableBoardArticleSorts = ['createdAt', 'updatedAt', 'articleLik
 
 export const availableQnaSorts = ['createdAt', 'updatedAt', 'questionAnswers', 'questionViews', 'questionLikes'];
 
+export const availableFaqSorts = ['createdAt', 'updatedAt'];
+
 export const availableCountries = {
 	KR: 'South Korea',
 	US: 'United States',
