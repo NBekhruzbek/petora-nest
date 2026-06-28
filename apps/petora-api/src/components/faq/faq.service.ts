@@ -42,6 +42,31 @@ export class FaqService {
 
 	/** QUERIES **/
 
+	public async getAllFaqsByAdmin(input: FaqsInquiry): Promise<Faqs> {
+		const { text } = input.search;
+		const match: T = { faqStatus: { $in: [FaqStatus.ACTIVE, FaqStatus.HIDE] } };
+		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
+
+		if (text)
+			match.$or = [{ faqTitle: { $regex: new RegExp(text, 'i') } }, { faqContent: { $regex: new RegExp(text, 'i') } }];
+
+		const result = await this.faqModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: sort },
+				{
+					$facet: {
+						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		return result[0];
+	}
+
 	public async getFaqs(input: FaqsInquiry): Promise<Faqs> {
 		const { text } = input.search;
 		const match: T = { faqStatus: FaqStatus.ACTIVE };

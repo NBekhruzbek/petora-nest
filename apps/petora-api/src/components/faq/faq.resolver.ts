@@ -39,6 +39,17 @@ export class FaqResolver {
 		return this.faqService.updateFaq(memberId, input);
 	}
 
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Query((returns) => Faqs)
+	public async getAllFaqsByAdmin(
+		@Args('input') input: FaqsInquiry,
+		@AuthMember('_id') memberId: Types.ObjectId | null,
+	): Promise<Faqs> {
+		console.log('Query: getAllFaqsByAdmin');
+		return await this.faqService.getAllFaqsByAdmin(input);
+	}
+
 	/** MEMBER **/
 
 	@UseGuards(WithoutGuard)
