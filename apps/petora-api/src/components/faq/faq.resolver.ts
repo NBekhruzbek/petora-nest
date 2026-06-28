@@ -31,6 +31,18 @@ export class FaqResolver {
 
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
+	@Query((returns) => FaqDetail)
+	public async getFaqDetailByAdmin(
+		@Args('faqId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId | null,
+	): Promise<FaqDetail> {
+		console.log('Query: getFaqDetailByAdmin');
+		const faqId = shapeIntoMongoObjectId(input);
+		return await this.faqService.getFaqDetailByAdmin(faqId);
+	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
 	@Mutation((returns) => FaqDetail)
 	public async updateFaq(
 		@Args('input') input: FaqUpdateInput,

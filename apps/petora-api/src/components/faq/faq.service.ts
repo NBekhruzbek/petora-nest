@@ -68,6 +68,18 @@ export class FaqService {
 		return result;
 	}
 
+	public async getFaqDetailByAdmin(faqId: Types.ObjectId): Promise<FaqDetail> {
+		const search: T = {
+			_id: faqId,
+			faqStatus: { $in: [FaqStatus.ACTIVE, FaqStatus.HIDE] },
+		};
+
+		const result: FaqDetail = await this.faqModel.findOne(search).lean().exec();
+		if (!result) throw new BadRequestException(Message.NO_DATA_FOUND);
+
+		return result;
+	}
+
 	public async getAllFaqsByAdmin(input: FaqsInquiry): Promise<Faqs> {
 		const { text } = input.search;
 		const match: T = { faqStatus: { $in: [FaqStatus.ACTIVE, FaqStatus.HIDE] } };
