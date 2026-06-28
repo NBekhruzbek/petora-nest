@@ -54,6 +54,18 @@ export class FaqResolver {
 
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
+	@Mutation((returns) => FaqDetail)
+	public async removeFaqByAdmin(
+		@Args('faqId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<FaqDetail> {
+		console.log('Mutation: removeFaqByAdmin');
+		const faqId = shapeIntoMongoObjectId(input);
+		return await this.faqService.removeFaqByAdmin(faqId);
+	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
 	@Query((returns) => Faqs)
 	public async getAllFaqsByAdmin(
 		@Args('input') input: FaqsInquiry,

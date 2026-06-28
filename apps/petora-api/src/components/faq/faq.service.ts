@@ -45,6 +45,14 @@ export class FaqService {
 		return result;
 	}
 
+	public async removeFaqByAdmin(faqId: Types.ObjectId): Promise<FaqDetail> {
+		const search: T = { _id: faqId, faqStatus: FaqStatus.DELETE };
+		const result = await this.faqModel.findOneAndDelete(search).exec();
+		if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
+
+		return result;
+	}
+
 	/** QUERIES **/
 
 	public async getFaqDetail(memberId: Types.ObjectId, faqId: Types.ObjectId): Promise<FaqDetail> {
