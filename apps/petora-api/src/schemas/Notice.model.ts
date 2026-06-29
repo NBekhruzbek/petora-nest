@@ -23,9 +23,9 @@ const NoticeSchema = new Schema(
 			required: true,
 		},
 
-		date: {
-			type: String,
-			required: true,
+		noticeViews: {
+			type: Number,
+			default: 0,
 		},
 	},
 	{ timestamps: true, collection: 'notices' },

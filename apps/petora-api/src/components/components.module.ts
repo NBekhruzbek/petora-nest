@@ -12,6 +12,7 @@ import { OrderModule } from './order/order.module';
 import { BookingModule } from './booking/booking.module';
 import { QnaModule } from './qna/qna.module';
 import { FaqModule } from './faq/faq.module';
+import { NoticeModule } from './notice/notice.module';
 
 @Module({
 	imports: [
@@ -28,6 +29,7 @@ import { FaqModule } from './faq/faq.module';
 		BookingModule,
 		QnaModule,
 		FaqModule,
+		NoticeModule,
 	],
 })
 export class ComponentsModule {}
