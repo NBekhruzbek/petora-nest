@@ -46,6 +46,14 @@ export class NoticeService {
 		return result;
 	}
 
+	public async removeNoticeByAdmin(noticeId: Types.ObjectId): Promise<NoticeDetail> {
+		const search: T = { _id: noticeId, noticeStatus: NoticeStatus.DELETE };
+		const result = await this.noticeModel.findOneAndDelete(search).exec();
+		if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
+
+		return result;
+	}
+
 	/** QUEIRES **/
 
 	public async getNoticeDetailByAdmin(noticeId: Types.ObjectId): Promise<NoticeDetail> {
