@@ -1,4 +1,4 @@
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { NoticeService } from './notice.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { MemberType } from '../../libs/enums/member.enum';
@@ -8,6 +8,7 @@ import { Types } from 'mongoose';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { NoticeInput } from '../../libs/dto/notice/notice.input';
 import { NoticeDetail } from '../../libs/dto/notice/notice';
+import { shapeIntoMongoObjectId } from '../../libs/config';
 
 @Resolver()
 export class NoticeResolver {
@@ -24,5 +25,17 @@ export class NoticeResolver {
 	): Promise<NoticeDetail> {
 		console.log('Mutation: createNewNotice');
 		return this.noticeService.createNewNotice(memberId, input);
+	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Query((returns) => NoticeDetail)
+	public async getNoticeDetailByAdmin(
+		@Args('noticeId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId | null,
+	): Promise<NoticeDetail> {
+		console.log('Query: getNoticeDetailByAdmin');
+		const noticeId = shapeIntoMongoObjectId(input);
+		return await this.noticeService.getNoticeDetailByAdmin(noticeId);
 	}
 }

@@ -1,10 +1,12 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ViewService } from '../view/view.service';
 import { Model, Types } from 'mongoose';
 import { Message } from '../../libs/enums/common.enum';
 import { NoticeDetail } from '../../libs/dto/notice/notice';
 import { NoticeInput } from '../../libs/dto/notice/notice.input';
+import { T } from '../../libs/types/common';
+import { NoticeStatus } from '../../libs/enums/notice.enum';
 
 @Injectable()
 export class NoticeService {
@@ -19,6 +21,20 @@ export class NoticeService {
 
 		const result: NoticeDetail = await this.noticeModel.create(input);
 		if (!result) throw new InternalServerErrorException(Message.CREATE_FAILED);
+
+		return result;
+	}
+
+	/** QUEIRES **/
+
+	public async getNoticeDetailByAdmin(noticeId: Types.ObjectId): Promise<NoticeDetail> {
+		const search: T = {
+			_id: noticeId,
+			noticeStatus: { $in: [NoticeStatus.ACTIVE, NoticeStatus.HIDE] },
+		};
+
+		const result: NoticeDetail = await this.noticeModel.findOne(search).lean().exec();
+		if (!result) throw new BadRequestException(Message.NO_DATA_FOUND);
 
 		return result;
 	}
