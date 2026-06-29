@@ -64,8 +64,18 @@ export class NoticeResolver {
 		return await this.noticeService.removeNoticeByAdmin(noticeId);
 	}
 
-	/** MEMBER **/
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Query((returns) => Notices)
+	public async getAllNoticesByAdmin(
+		@Args('input') input: NoticeInquiry,
+		@AuthMember('_id') memberId: Types.ObjectId | null,
+	): Promise<Notices> {
+		console.log('Query: getAllNoticesByAdmin');
+		return await this.noticeService.getAllNoticesByAdmin(input);
+	}
 
+	/** MEMBER **/
 	@UseGuards(WithoutGuard)
 	@Query((returns) => NoticeDetail)
 	public async getNoticeDetail(
