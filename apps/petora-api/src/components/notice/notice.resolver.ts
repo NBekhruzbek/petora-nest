@@ -6,10 +6,11 @@ import { UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Types } from 'mongoose';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
-import { NoticeInput } from '../../libs/dto/notice/notice.input';
-import { NoticeDetail } from '../../libs/dto/notice/notice';
+import { NoticeInput, NoticeInquiry } from '../../libs/dto/notice/notice.input';
+import { NoticeDetail, Notices } from '../../libs/dto/notice/notice';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { NoticeUpdateInput } from '../../libs/dto/notice/notice.update';
+import { WithoutGuard } from '../auth/guards/without.guard';
 
 @Resolver()
 export class NoticeResolver {
@@ -61,5 +62,28 @@ export class NoticeResolver {
 		console.log('Mutation: removeNoticeByAdmin');
 		const noticeId = shapeIntoMongoObjectId(input);
 		return await this.noticeService.removeNoticeByAdmin(noticeId);
+	}
+
+	/** MEMBER **/
+
+	@UseGuards(WithoutGuard)
+	@Query((returns) => NoticeDetail)
+	public async getNoticeDetail(
+		@Args('noticeId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId | null,
+	): Promise<NoticeDetail> {
+		console.log('Query: getNoticeDetail');
+		const noticeId = shapeIntoMongoObjectId(input);
+		return await this.noticeService.getNoticeDetail(memberId, noticeId);
+	}
+
+	@UseGuards(WithoutGuard)
+	@Query((returns) => Notices)
+	public async getNotices(
+		@Args('input') input: NoticeInquiry,
+		@AuthMember('_id') memberId: Types.ObjectId | null,
+	): Promise<Notices> {
+		console.log('Query: getNotices');
+		return await this.noticeService.getNotices(input);
 	}
 }

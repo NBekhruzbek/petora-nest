@@ -1,7 +1,9 @@
-import { Field, InputType } from '@nestjs/graphql';
-import { IsNotEmpty } from 'class-validator';
+import { Field, InputType, Int } from '@nestjs/graphql';
+import { IsIn, IsNotEmpty, IsOptional, Min } from 'class-validator';
 import { NoticeStatus, NoticeType } from '../../enums/notice.enum';
 import { Types } from 'mongoose';
+import { Direction } from '../../enums/common.enum';
+import { availableNoticeSorts } from '../../config';
 
 @InputType()
 export class NoticeInput {
@@ -26,4 +28,37 @@ export class NoticeInput {
 	noticeContent: string;
 
 	memberId: Types.ObjectId;
+}
+
+@InputType()
+class NoticeISearch {
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	text?: string;
+}
+
+@InputType()
+export class NoticeInquiry {
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	page: number;
+
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	limit: number;
+
+	@IsOptional()
+	@IsIn(availableNoticeSorts)
+	@Field(() => String, { nullable: true })
+	sort?: string;
+
+	@IsOptional()
+	@Field(() => Direction, { nullable: true })
+	direction?: Direction;
+
+	@IsNotEmpty()
+	@Field(() => NoticeISearch)
+	search: NoticeISearch;
 }
