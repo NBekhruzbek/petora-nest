@@ -9,6 +9,7 @@ import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { NoticeInput } from '../../libs/dto/notice/notice.input';
 import { NoticeDetail } from '../../libs/dto/notice/notice';
 import { shapeIntoMongoObjectId } from '../../libs/config';
+import { NoticeUpdateInput } from '../../libs/dto/notice/notice.update';
 
 @Resolver()
 export class NoticeResolver {
@@ -37,5 +38,16 @@ export class NoticeResolver {
 		console.log('Query: getNoticeDetailByAdmin');
 		const noticeId = shapeIntoMongoObjectId(input);
 		return await this.noticeService.getNoticeDetailByAdmin(noticeId);
+	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation((returns) => NoticeDetail)
+	public async updateNoticeByAdmin(
+		@Args('input') input: NoticeUpdateInput,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<NoticeDetail> {
+		console.log('Mutation: updateNoticeByAdmin');
+		return this.noticeService.updateNoticeByAdmin(memberId, input);
 	}
 }

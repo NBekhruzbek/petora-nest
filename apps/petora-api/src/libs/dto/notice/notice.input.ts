@@ -1,7 +1,7 @@
 import { Field, InputType } from '@nestjs/graphql';
 import { IsNotEmpty } from 'class-validator';
-import { Types } from 'mongoose';
 import { NoticeStatus, NoticeType } from '../../enums/notice.enum';
+import { Types } from 'mongoose';
 
 @InputType()
 export class NoticeInput {
