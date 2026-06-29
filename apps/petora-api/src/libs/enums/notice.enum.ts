@@ -7,3 +7,10 @@ export enum NoticeType {
 	ANNOUNCEMENT = 'ANNOUNCEMENT',
 }
 registerEnumType(NoticeType, { name: 'NoticeType' });
+
+export enum NoticeStatus {
+	ACTIVE = 'ACTIVE',
+	HIDE = 'HIDE',
+	DELETE = 'DELETE',
+}
+registerEnumType(NoticeStatus, { name: 'NoticeStatus' });
