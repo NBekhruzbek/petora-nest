@@ -29,6 +29,8 @@ export const availableFaqSorts = ['createdAt', 'updatedAt'];
 
 export const availableNoticeSorts = ['createdAt', 'updatedAt'];
 
+export const availableCommentSorts = ['createdAt', 'updatedAt'];
+
 export const availableCountries = {
 	KR: 'South Korea',
 	US: 'United States',
