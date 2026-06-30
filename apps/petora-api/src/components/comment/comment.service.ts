@@ -69,6 +69,12 @@ export class CommentService {
 		return result;
 	}
 
+	public async removeCommentByAdmin(input: Types.ObjectId): Promise<Comment> {
+		const result = await this.commentModel.findByIdAndDelete(input);
+		if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
+		return result;
+	}
+
 	/** QUERIES **/
 
 	public async getComments(memberId: Types.ObjectId, input: CommentsInquiry): Promise<Comments> {
