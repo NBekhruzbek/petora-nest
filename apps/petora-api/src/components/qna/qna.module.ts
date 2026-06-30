@@ -20,5 +20,6 @@ import { MemberModule } from '../member/member.module';
 		ViewModule,
 	],
 	providers: [QnaResolver, QnaService],
+	exports: [QnaService],
 })
 export class QnaModule {}
