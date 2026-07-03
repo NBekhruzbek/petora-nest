@@ -130,7 +130,13 @@ export class QnaService {
 				targetQuestion.questionViews++;
 			}
 
-			// TODO: Check MeLiked
+			//  Check MeLiked
+			const likeInput = {
+				memberId: memberId,
+				likeRefId: questionId,
+				likeGroup: LikeGroup.QNA,
+			};
+			targetQuestion.meLiked = await this.likeService.checkLikeExistence(likeInput);
 		}
 
 		targetQuestion.memberData = await this.memberService.getMember(null, targetQuestion.memberId);

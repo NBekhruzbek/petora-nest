@@ -2,6 +2,7 @@ import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { Member, TotalCounter } from '../member/member';
 import { Types } from 'mongoose';
 import { QnaStatus } from '../../enums/qna.enum';
+import { MeLiked } from '../like/like';
 
 @ObjectType()
 export class QnaQuestion {
@@ -40,6 +41,11 @@ export class QnaQuestion {
 
 	@Field(() => Date)
 	updatedAt: Date;
+
+	/** from aggregation */
+
+	@Field(() => [MeLiked], { nullable: true })
+	meLiked?: MeLiked[];
 }
 
 @ObjectType()
