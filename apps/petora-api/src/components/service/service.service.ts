@@ -112,9 +112,15 @@ export class ServiceService {
 					await this.serviceModel.findOneAndUpdate(search, { $inc: { serviceViews: 1 } }, { new: true }).exec();
 					targetService.serviceViews++;
 				}
-			}
 
-			//TODO: meLiked?
+				//meLiked?
+				const likeInput = {
+					memberId: viewerId,
+					likeRefId: targetId,
+					likeGroup: LikeGroup.SERVICE,
+				};
+				targetService.meLiked = await this.likeService.checkLikeExistence(likeInput);
+			}
 
 			return targetService;
 		} catch (err) {
