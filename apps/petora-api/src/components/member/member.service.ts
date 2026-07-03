@@ -123,9 +123,15 @@ export class MemberService {
 				await this.memberModel.findOneAndUpdate(search, { $inc: { memberViews: 1 } }, { new: true }).exec();
 				targetMember.memberViews++;
 			}
-		}
 
-		// meLiked?
+			// meLiked?
+			const likeInput = {
+				memberId: viewerId,
+				likeRefId: targetId,
+				likeGroup: LikeGroup.AGENT,
+			};
+			targetMember.meLiked = await this.likeService.checkLikeExistence(likeInput);
+		}
 
 		return targetMember;
 	}
