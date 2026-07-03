@@ -12,6 +12,9 @@ import { ViewService } from '../view/view.service';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { shapeIntoMongoObjectId } from '../../libs/config';
+import { LikeInput } from '../../libs/dto/like/like.input';
+import { LikeGroup } from '../../libs/enums/like.enum';
+import { LikeService } from '../like/like.service';
 
 @Injectable()
 export class MemberService {
@@ -20,6 +23,7 @@ export class MemberService {
 		@InjectModel('Billing') private readonly billingModel: Model<MemberBillingInfos>,
 		private authService: AuthService,
 		private viewService: ViewService,
+		private likeService: LikeService,
 	) {}
 
 	public async signup(input: MemberInput): Promise<Member> {
@@ -153,6 +157,24 @@ export class MemberService {
 		return result[0];
 	}
 
+	public async likeTargetMember(memberid: Types.ObjectId, likeRefId: Types.ObjectId): Promise<Member> {
+		const target: Member = await this.memberModel.findOne({ _id: likeRefId, memberStatus: MemberStatus.ACTIVE }).exec();
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const input: LikeInput = {
+			memberId: memberid,
+			likeRefId: likeRefId,
+			likeGroup: LikeGroup.AGENT,
+		};
+
+		// LIKE TOGGLE
+		const modifier: number = await this.likeService.toggleLike(input);
+		const result = await this.memberStatsEditor({ _id: likeRefId, targetKey: 'memberLikes', modifier: modifier });
+		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+
+		return result;
+	}
+
 	private shapeMatchQuery(match: T, input: AgentsInquiry): void {
 		const { memberId, memberServiceTypes, memberServiceArea, text } = input.search;
 
@@ -257,7 +279,7 @@ export class MemberService {
 	}
 
 	public async memberStatsEditor(input: StatisticModifier): Promise<Member> {
-		console.log('Executed');
+		console.log('memberStatsEditor: Executed');
 		const { _id, targetKey, modifier } = input;
 		return await this.memberModel.findByIdAndUpdate(_id, { $inc: { [targetKey]: modifier } }, { new: true }).exec();
 	}
