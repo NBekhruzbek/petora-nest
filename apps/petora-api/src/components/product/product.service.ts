@@ -6,17 +6,21 @@ import { ProductInput, ProductsInquiry } from '../../libs/dto/product/product.in
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { ProductUpdate } from '../../libs/dto/product/product.update';
 import { shapeIntoMongoObjectId } from '../../libs/config';
-import { T } from '../../libs/types/common';
+import { StatisticModifier, T } from '../../libs/types/common';
 import { ProductStatus, ProductType } from '../../libs/enums/product.enum';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { ViewService } from '../view/view.service';
+import { LikeInput } from '../../libs/dto/like/like.input';
+import { LikeGroup } from '../../libs/enums/like.enum';
+import { LikeService } from '../like/like.service';
 
 @Injectable()
 export class ProductService {
 	constructor(
 		@InjectModel('Product') private readonly productModel: Model<Product>,
 		private viewService: ViewService,
+		private likeService: LikeService,
 	) {}
 
 	public async createProduct(input: ProductInput): Promise<Product> {
@@ -124,6 +128,25 @@ export class ProductService {
 		return result[0];
 	}
 
+	public async likeTargetProduct(memberid: Types.ObjectId, likeRefId: Types.ObjectId): Promise<Product> {
+		const target: Product = await this.productModel
+			.findOne({ _id: likeRefId, productStatus: ProductStatus.ACTIVE })
+			.exec();
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const input: LikeInput = {
+			memberId: memberid,
+			likeRefId: likeRefId,
+			likeGroup: LikeGroup.PRODUCT,
+		};
+
+		const modifier: number = await this.likeService.toggleLike(input);
+		const result = await this.productStatsEditor({ _id: likeRefId, targetKey: 'productLikes', modifier: modifier });
+		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+
+		return result;
+	}
+
 	private shapeMatchQuery(match: T, input: ProductsInquiry): void {
 		const { priceRange, productPetType, productType, text } = input.search;
 		if (productPetType && productPetType.length) match.productPetType = { $in: productPetType };
@@ -182,5 +205,11 @@ export class ProductService {
 			.limit(5)
 			.lean()
 			.exec();
+	}
+
+	public async productStatsEditor(input: StatisticModifier): Promise<Product> {
+		console.log('productStatsEditor: Executed');
+		const { _id, targetKey, modifier } = input;
+		return await this.productModel.findByIdAndUpdate(_id, { $inc: { [targetKey]: modifier } }, { new: true }).exec();
 	}
 }

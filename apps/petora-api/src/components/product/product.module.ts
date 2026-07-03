@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import ProductSchema from '../../schemas/Product.model';
 import { AuthModule } from '../auth/auth.module';
 import { ViewModule } from '../view/view.module';
+import { LikeModule } from '../like/like.module';
 
 @Module({
 	imports: [
@@ -16,6 +17,7 @@ import { ViewModule } from '../view/view.module';
 		]),
 		AuthModule,
 		ViewModule,
+		LikeModule,
 	],
 	providers: [ProductService, ProductResolver],
 })
