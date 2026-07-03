@@ -58,6 +58,17 @@ export class QnaResolver {
 		return await this.qnaService.getQuestions(memberId, input);
 	}
 
+	@UseGuards(AuthGuard)
+	@Mutation(() => QnaQuestion)
+	public async likeTargetQuestion(
+		@Args('questionId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<QnaQuestion> {
+		console.log('Mutation: likeTargetQuestion');
+		const likeRefId = shapeIntoMongoObjectId(input);
+		return await this.qnaService.likeTargetQuestion(memberId, likeRefId);
+	}
+
 	/** ADMIN */
 
 	@Roles(MemberType.ADMIN)

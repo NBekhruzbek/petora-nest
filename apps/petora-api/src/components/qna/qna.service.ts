@@ -11,6 +11,9 @@ import { QnaStatus } from '../../libs/enums/qna.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { QuestionUpdateInput } from '../../libs/dto/qna/qna.update';
 import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { LikeInput } from '../../libs/dto/like/like.input';
+import { LikeGroup } from '../../libs/enums/like.enum';
+import { LikeService } from '../like/like.service';
 
 @Injectable()
 export class QnaService {
@@ -18,6 +21,7 @@ export class QnaService {
 		@InjectModel('QNA') private readonly qnaModel: Model<QnaQuestion>,
 		private readonly memberService: MemberService,
 		private readonly viewService: ViewService,
+		private readonly likeService: LikeService,
 	) {}
 
 	/** MUTATIONS **/
@@ -82,6 +86,27 @@ export class QnaService {
 		const search: T = { _id: questionId, qnaStatus: QnaStatus.DELETE };
 		const result = await this.qnaModel.findOneAndDelete(search).exec();
 		if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
+
+		return result;
+	}
+
+	public async likeTargetQuestion(memberid: Types.ObjectId, likeRefId: Types.ObjectId): Promise<QnaQuestion> {
+		const target: QnaQuestion = await this.qnaModel.findOne({ _id: likeRefId, qnaStatus: QnaStatus.ACTIVE }).exec();
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const input: LikeInput = {
+			memberId: memberid,
+			likeRefId: likeRefId,
+			likeGroup: LikeGroup.QNA,
+		};
+
+		const modifier: number = await this.likeService.toggleLike(input);
+		const result = await this.questionStatsEditor({
+			_id: likeRefId,
+			targetKey: 'questionLikes',
+			modifier: modifier,
+		});
+		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
 
 		return result;
 	}
