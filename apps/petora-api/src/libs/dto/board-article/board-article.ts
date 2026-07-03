@@ -2,6 +2,7 @@ import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { Types } from 'mongoose';
 import { ArticleCategory, ArticleStatus } from '../../enums/boardArticle.enum';
 import { Member, TotalCounter } from '../member/member';
+import { MeLiked } from '../like/like';
 
 @ObjectType()
 export class BoardArticle {
@@ -43,6 +44,11 @@ export class BoardArticle {
 
 	@Field(() => Date)
 	updatedAt: Date;
+
+	/** from aggregation */
+
+	@Field(() => [MeLiked], { nullable: true })
+	meLiked?: MeLiked[];
 }
 
 @ObjectType()
