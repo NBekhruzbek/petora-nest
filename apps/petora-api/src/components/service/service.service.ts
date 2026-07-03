@@ -6,12 +6,15 @@ import { ServiceInput, ServicesInquiry } from '../../libs/dto/service/service.in
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { ServiceUpdate } from '../../libs/dto/service/service.update';
 import { shapeIntoMongoObjectId } from '../../libs/config';
-import { T } from '../../libs/types/common';
+import { StatisticModifier, T } from '../../libs/types/common';
 import { ServiceStatus, ServiceType } from '../../libs/enums/service.enum';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { ViewService } from '../view/view.service';
 import { MemberService } from '../member/member.service';
+import { LikeInput } from '../../libs/dto/like/like.input';
+import { LikeGroup } from '../../libs/enums/like.enum';
+import { LikeService } from '../like/like.service';
 
 @Injectable()
 export class ServiceService {
@@ -19,6 +22,7 @@ export class ServiceService {
 		@InjectModel('Service') private readonly serviceModel: Model<Service>,
 		private viewService: ViewService,
 		private memberService: MemberService,
+		private likeService: LikeService,
 	) {}
 
 	public async createService(memberId: Types.ObjectId, input: ServiceInput): Promise<Service> {
@@ -143,6 +147,25 @@ export class ServiceService {
 		return result[0];
 	}
 
+	public async likeTargetService(memberid: Types.ObjectId, likeRefId: Types.ObjectId): Promise<Service> {
+		const target: Service = await this.serviceModel
+			.findOne({ _id: likeRefId, serviceStatus: ServiceStatus.ACTIVE })
+			.exec();
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const input: LikeInput = {
+			memberId: memberid,
+			likeRefId: likeRefId,
+			likeGroup: LikeGroup.SERVICE,
+		};
+
+		const modifier: number = await this.likeService.toggleLike(input);
+		const result = await this.serviceStatsEditor({ _id: likeRefId, targetKey: 'serviceLikes', modifier: modifier });
+		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+
+		return result;
+	}
+
 	private shapeMatchQuery(match: T, input: ServicesInquiry): void {
 		const { serviceType, serviceLocation, text, priceRange } = input.search;
 		if (serviceType && serviceType.length) match.serviceType = { $in: serviceType };
@@ -183,5 +206,11 @@ export class ServiceService {
 		return await this.serviceModel
 			.findOneAndUpdate({ _id: serviceId }, { $inc: { serviceBookings: updatingNumber } }, { new: true })
 			.exec();
+	}
+
+	public async serviceStatsEditor(input: StatisticModifier): Promise<Service> {
+		console.log('serviceStatsEditor: Executed');
+		const { _id, targetKey, modifier } = input;
+		return await this.serviceModel.findByIdAndUpdate(_id, { $inc: { [targetKey]: modifier } }, { new: true }).exec();
 	}
 }

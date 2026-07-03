@@ -11,6 +11,7 @@ import { Service, Services } from '../../libs/dto/service/service';
 import { ServiceUpdate } from '../../libs/dto/service/service.update';
 import { WithoutGuard } from '../auth/guards/without.guard';
 import { shapeIntoMongoObjectId } from '../../libs/config';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 @Resolver()
 export class ServiceResolver {
@@ -70,5 +71,16 @@ export class ServiceResolver {
 	public async getRelatedServices(@Args('serviceId') input: string): Promise<Service[]> {
 		console.log('Query: getRelatedServices');
 		return await this.serviceService.getRelatedServices(input);
+	}
+
+	@UseGuards(AuthGuard)
+	@Mutation(() => Service)
+	public async likeTargetService(
+		@Args('serviceId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<Service> {
+		console.log('Mutation: likeTargetService');
+		const likeRefId = shapeIntoMongoObjectId(input);
+		return await this.serviceService.likeTargetService(memberId, likeRefId);
 	}
 }
