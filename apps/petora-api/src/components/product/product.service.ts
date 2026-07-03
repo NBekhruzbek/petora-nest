@@ -94,9 +94,15 @@ export class ProductService {
 					await this.productModel.findOneAndUpdate(search, { $inc: { productViews: 1 } }, { new: true }).exec();
 					targetProduct.productViews++;
 				}
-			}
 
-			// meLiked?
+				// meLiked?
+				const likeInput = {
+					memberId: viewerId,
+					likeRefId: targetId,
+					likeGroup: LikeGroup.PRODUCT,
+				};
+				targetProduct.meLiked = await this.likeService.checkLikeExistence(likeInput);
+			}
 
 			return targetProduct;
 		} catch (err) {
