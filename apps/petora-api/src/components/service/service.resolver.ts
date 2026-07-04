@@ -68,9 +68,12 @@ export class ServiceResolver {
 
 	@UseGuards(WithoutGuard)
 	@Query(() => [Service])
-	public async getRelatedServices(@Args('serviceId') input: string): Promise<Service[]> {
+	public async getRelatedServices(
+		@Args('serviceId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<Service[]> {
 		console.log('Query: getRelatedServices');
-		return await this.serviceService.getRelatedServices(input);
+		return await this.serviceService.getRelatedServices(memberId, input);
 	}
 
 	@UseGuards(AuthGuard)

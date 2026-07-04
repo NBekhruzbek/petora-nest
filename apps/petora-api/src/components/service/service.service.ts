@@ -5,7 +5,7 @@ import { Service, Services } from '../../libs/dto/service/service';
 import { ServiceInput, ServicesInquiry } from '../../libs/dto/service/service.input';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { ServiceUpdate } from '../../libs/dto/service/service.update';
-import { shapeIntoMongoObjectId } from '../../libs/config';
+import { lookupAuthMemberLiked, shapeIntoMongoObjectId } from '../../libs/config';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { ServiceStatus, ServiceType } from '../../libs/enums/service.enum';
 import { ViewInput } from '../../libs/dto/view/view.input';
@@ -142,7 +142,11 @@ export class ServiceService {
 				{ $sort: sort },
 				{
 					$facet: {
-						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
+						list: [
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+							lookupAuthMemberLiked(memberId, '$_id'),
+						],
 						metaCounter: [{ $count: 'total' }],
 					},
 				},
@@ -185,7 +189,7 @@ export class ServiceService {
 		}
 	}
 
-	public async getRelatedServices(input: string): Promise<Service[]> {
+	public async getRelatedServices(memberId: Types.ObjectId, input: string): Promise<Service[]> {
 		const serviceId = shapeIntoMongoObjectId(input);
 		const search: T = {
 			_id: serviceId,
@@ -197,14 +201,18 @@ export class ServiceService {
 		if (!targetService) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		return this.serviceModel
-			.find({
-				_id: { $ne: serviceId },
-				serviceType: targetService.serviceType,
-				serviceStatus: ServiceStatus.ACTIVE,
-			})
-			.sort({ serviceLikes: -1 })
-			.limit(5)
-			.lean()
+			.aggregate([
+				{
+					$match: {
+						_id: { $ne: serviceId },
+						serviceType: targetService.serviceType,
+						serviceStatus: ServiceStatus.ACTIVE,
+					},
+				},
+				{ $sort: { serviceLikes: -1 } },
+				{ $limit: 5 },
+				lookupAuthMemberLiked(memberId, '$_id'),
+			])
 			.exec();
 	}
 
