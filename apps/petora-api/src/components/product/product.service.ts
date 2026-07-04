@@ -5,7 +5,7 @@ import { Product, Products } from '../../libs/dto/product/product';
 import { ProductInput, ProductsInquiry } from '../../libs/dto/product/product.input';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { ProductUpdate } from '../../libs/dto/product/product.update';
-import { shapeIntoMongoObjectId } from '../../libs/config';
+import { lookupAuthMemberLiked, shapeIntoMongoObjectId } from '../../libs/config';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { ProductStatus, ProductType } from '../../libs/enums/product.enum';
 import { ViewInput } from '../../libs/dto/view/view.input';
@@ -123,7 +123,11 @@ export class ProductService {
 				{ $sort: sort },
 				{
 					$facet: {
-						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
+						list: [
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+							lookupAuthMemberLiked(memberId, '$_id'),
+						],
 						metaCounter: [{ $count: 'total' }],
 					},
 				},
