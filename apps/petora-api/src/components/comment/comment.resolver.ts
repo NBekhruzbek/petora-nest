@@ -38,6 +38,17 @@ export class CommentResolver {
 		return await this.commentService.updateComment(memberId, input);
 	}
 
+	@UseGuards(AuthGuard)
+	@Mutation(() => Comment)
+	public async likeTargetComment(
+		@Args('commentId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<Comment> {
+		console.log('Mutation: likeTargetComment');
+		const likeRefId = shapeIntoMongoObjectId(input);
+		return await this.commentService.likeTargetComment(memberId, likeRefId);
+	}
+
 	@UseGuards(WithoutGuard)
 	@Query((returns) => Comments)
 	public async getComments(

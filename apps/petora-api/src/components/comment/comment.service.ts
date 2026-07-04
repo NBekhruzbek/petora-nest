@@ -8,8 +8,11 @@ import { CommentGroup, CommentStatus } from '../../libs/enums/comment.enum';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { Model, Types } from 'mongoose';
 import { CommentUpdate } from '../../libs/dto/comment/comment.update';
-import { T } from '../../libs/types/common';
+import { StatisticModifier, T } from '../../libs/types/common';
 import { lookupMember } from '../../libs/config';
+import { LikeInput } from '../../libs/dto/like/like.input';
+import { LikeGroup } from '../../libs/enums/like.enum';
+import { LikeService } from '../like/like.service';
 
 @Injectable()
 export class CommentService {
@@ -17,6 +20,7 @@ export class CommentService {
 		@InjectModel('Comment') private readonly commentModel: Model<Comment>,
 		private readonly qnaService: QnaService,
 		private readonly boardArticleService: BoardArticleService,
+		private readonly likeService: LikeService,
 	) {}
 
 	/** MUTATIONS **/
@@ -75,6 +79,25 @@ export class CommentService {
 		return result;
 	}
 
+	public async likeTargetComment(memberid: Types.ObjectId, likeRefId: Types.ObjectId): Promise<Comment> {
+		const target: Comment = await this.commentModel
+			.findOne({ _id: likeRefId, commentStatus: CommentStatus.ACTIVE })
+			.exec();
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const input: LikeInput = {
+			memberId: memberid,
+			likeRefId: likeRefId,
+			likeGroup: LikeGroup.COMMENT,
+		};
+
+		const modifier: number = await this.likeService.toggleLike(input);
+		const result = await this.commentStatsEditor({ _id: likeRefId, targetKey: 'commentLikes', modifier: modifier });
+		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+
+		return result;
+	}
+
 	/** QUERIES **/
 
 	public async getComments(memberId: Types.ObjectId, input: CommentsInquiry): Promise<Comments> {
@@ -101,5 +124,13 @@ export class CommentService {
 		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		return result[0];
+	}
+
+	/** HELPERS **/
+
+	public async commentStatsEditor(input: StatisticModifier): Promise<Comment> {
+		console.log('commentStatsEditor: Executed');
+		const { _id, targetKey, modifier } = input;
+		return await this.commentModel.findByIdAndUpdate(_id, { $inc: { [targetKey]: modifier } }, { new: true }).exec();
 	}
 }

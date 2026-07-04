@@ -6,6 +6,7 @@ import CommentSchema from '../../schemas/Comment.model';
 import { AuthModule } from '../auth/auth.module';
 import { QnaModule } from '../qna/qna.module';
 import { BoardArticleModule } from '../board-article/board-article.module';
+import { LikeModule } from '../like/like.module';
 
 @Module({
 	imports: [
@@ -18,6 +19,7 @@ import { BoardArticleModule } from '../board-article/board-article.module';
 		AuthModule,
 		QnaModule,
 		BoardArticleModule,
+		LikeModule,
 	],
 	providers: [CommentResolver, CommentService],
 })

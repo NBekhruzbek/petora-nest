@@ -20,6 +20,11 @@ const CommentSchema = new Schema(
 			required: true,
 		},
 
+		commentLikes: {
+			type: Number,
+			default: 0,
+		},
+
 		commentRefId: {
 			type: Types.ObjectId,
 			required: true,
