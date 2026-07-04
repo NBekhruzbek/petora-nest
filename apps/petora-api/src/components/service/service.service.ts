@@ -2,7 +2,7 @@ import { HttpException, Injectable, InternalServerErrorException } from '@nestjs
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Service, Services } from '../../libs/dto/service/service';
-import { ServiceInput, ServicesInquiry } from '../../libs/dto/service/service.input';
+import { ServiceInput, ServiceOrdinaryInquiry, ServicesInquiry } from '../../libs/dto/service/service.input';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { ServiceUpdate } from '../../libs/dto/service/service.update';
 import { lookupAuthMemberLiked, shapeIntoMongoObjectId } from '../../libs/config';
@@ -187,6 +187,10 @@ export class ServiceService {
 			if (priceRange.min !== undefined) match.servicePrice.$gte = priceRange.min;
 			if (priceRange.max !== undefined) match.servicePrice.$lte = priceRange.max;
 		}
+	}
+
+	public async getFavoriteServices(memberId: Types.ObjectId, input: ServiceOrdinaryInquiry): Promise<Services> {
+		return await this.likeService.getFavoriteServices(memberId, input);
 	}
 
 	public async getRelatedServices(memberId: Types.ObjectId, input: string): Promise<Service[]> {

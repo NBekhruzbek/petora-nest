@@ -112,3 +112,16 @@ export class ServicesInquiry {
 	@Field(() => SISearch)
 	search: SISearch;
 }
+
+@InputType()
+export class ServiceOrdinaryInquiry {
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	page: number;
+
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	limit: number;
+}

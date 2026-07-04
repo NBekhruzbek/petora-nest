@@ -98,10 +98,19 @@ export const lookupMember = {
 	},
 };
 
-export const lookupFavorite = {
+export const lookupFavoriteProducts = {
 	$lookup: {
 		from: 'members',
 		localField: 'favoriteProducts.memberId',
+		foreignField: '_id',
+		as: 'memberData',
+	},
+};
+
+export const lookupFavoriteServices = {
+	$lookup: {
+		from: 'members',
+		localField: 'favoriteServices.memberId',
 		foreignField: '_id',
 		as: 'memberData',
 	},

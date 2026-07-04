@@ -4,7 +4,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { MemberType } from '../../libs/enums/member.enum';
 import { UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { ServiceInput, ServicesInquiry } from '../../libs/dto/service/service.input';
+import { ServiceInput, ServiceOrdinaryInquiry, ServicesInquiry } from '../../libs/dto/service/service.input';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { Types } from 'mongoose';
 import { Service, Services } from '../../libs/dto/service/service';
@@ -54,6 +54,16 @@ export class ServiceResolver {
 		const targetId = shapeIntoMongoObjectId(input);
 		const viewerId = shapeIntoMongoObjectId(memberId);
 		return await this.serviceService.getService(viewerId, targetId);
+	}
+
+	@UseGuards(AuthGuard)
+	@Query(() => Services)
+	public async getFavoriteServices(
+		@Args('input') input: ServiceOrdinaryInquiry,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<Services> {
+		console.log('Query: getFavoriteServices');
+		return await this.serviceService.getFavoriteServices(memberId, input);
 	}
 
 	@UseGuards(WithoutGuard)

@@ -7,9 +7,10 @@ import { T } from '../../libs/types/common';
 import { Message } from '../../libs/enums/common.enum';
 import { Products } from '../../libs/dto/product/product';
 import { LikeGroup } from '../../libs/enums/like.enum';
-import { lookupFavorite } from '../../libs/config';
+import { lookupFavoriteProducts, lookupFavoriteServices } from '../../libs/config';
 import { Services } from '../../libs/dto/service/service';
 import { OrdinaryInquiry } from '../../libs/dto/product/product.input';
+import { ServiceOrdinaryInquiry } from '../../libs/dto/service/service.input';
 
 @Injectable()
 export class LikeService {
@@ -62,7 +63,7 @@ export class LikeService {
 				{ $unwind: '$favoriteProducts' },
 				{
 					$facet: {
-						list: [{ $skip: (page - 1) * limit }, { $limit: limit }, lookupFavorite],
+						list: [{ $skip: (page - 1) * limit }, { $limit: limit }, lookupFavoriteProducts],
 						metaCounter: [{ $count: 'total' }],
 					},
 				},
@@ -71,6 +72,38 @@ export class LikeService {
 
 		const result: Products = { list: [], metaCounter: data[0].metaCounter };
 		result.list = data[0].list.map((ele) => ele.favoriteProducts);
+
+		return result;
+	}
+
+	public async getFavoriteServices(memberId: Types.ObjectId, input: ServiceOrdinaryInquiry): Promise<Services> {
+		const { page, limit } = input;
+		const match: T = { likeGroup: LikeGroup.SERVICE, memberId: memberId };
+
+		const data: T = await this.likeModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: { updatedAt: -1 } },
+				{
+					$lookup: {
+						from: 'services',
+						localField: 'likeRefId',
+						foreignField: '_id',
+						as: 'favoriteServices',
+					},
+				},
+				{ $unwind: '$favoriteServices' },
+				{
+					$facet: {
+						list: [{ $skip: (page - 1) * limit }, { $limit: limit }, lookupFavoriteServices],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+
+		const result: Services = { list: [], metaCounter: data[0].metaCounter };
+		result.list = data[0].list.map((ele) => ele.favoriteServices);
 
 		return result;
 	}
