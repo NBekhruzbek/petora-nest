@@ -2,8 +2,8 @@ import { Field, InputType, Int } from '@nestjs/graphql';
 import { ProductPetType, ProductStatus, ProductType } from '../../enums/product.enum';
 import { IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, Length, Max, Min } from 'class-validator';
 import { Direction } from '../../enums/common.enum';
-import { Types } from 'mongoose';
 import { availableProductSorts } from '../../config';
+import { LikeGroup } from '../../enums/like.enum';
 
 @InputType()
 export class ProductInput {
@@ -136,4 +136,17 @@ export class ProductsInquiry {
 	@IsNotEmpty()
 	@Field(() => PISearch)
 	search: PISearch;
+}
+
+@InputType()
+export class OrdinaryInquiry {
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	page: number;
+
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	limit: number;
 }

@@ -97,3 +97,12 @@ export const lookupMember = {
 		as: 'memberData',
 	},
 };
+
+export const lookupFavorite = {
+	$lookup: {
+		from: 'members',
+		localField: 'favoriteProducts.memberId',
+		foreignField: '_id',
+		as: 'memberData',
+	},
+};

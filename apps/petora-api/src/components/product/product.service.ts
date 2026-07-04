@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException } from '@
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Product, Products } from '../../libs/dto/product/product';
-import { ProductInput, ProductsInquiry } from '../../libs/dto/product/product.input';
+import { OrdinaryInquiry, ProductInput, ProductsInquiry } from '../../libs/dto/product/product.input';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { ProductUpdate } from '../../libs/dto/product/product.update';
 import { lookupAuthMemberLiked, shapeIntoMongoObjectId } from '../../libs/config';
@@ -168,6 +168,10 @@ export class ProductService {
 			if (priceRange.min !== undefined) match.productPriceAfterDiscount.$gte = priceRange.min;
 			if (priceRange.max !== undefined) match.productPriceAfterDiscount.$lte = priceRange.max;
 		}
+	}
+
+	public async getFavoriteProducts(memberId: Types.ObjectId, input: OrdinaryInquiry): Promise<Products> {
+		return await this.likeService.getFavoriteProducts(memberId, input);
 	}
 
 	public async getAllProductsByAdmin(input: ProductsInquiry): Promise<Products> {

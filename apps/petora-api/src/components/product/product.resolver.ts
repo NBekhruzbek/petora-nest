@@ -1,6 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ProductService } from './product.service';
-import { ProductInput, ProductsInquiry } from '../../libs/dto/product/product.input';
+import { OrdinaryInquiry, ProductInput, ProductsInquiry } from '../../libs/dto/product/product.input';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { MemberType } from '../../libs/enums/member.enum';
 import { UseGuards } from '@nestjs/common';
@@ -50,6 +50,16 @@ export class ProductResolver {
 	): Promise<Products> {
 		console.log('Query: getProducts');
 		return await this.productService.getProducts(memberId, input);
+	}
+
+	@UseGuards(AuthGuard)
+	@Query(() => Products)
+	public async getFavoriteProducts(
+		@Args('input') input: OrdinaryInquiry,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<Products> {
+		console.log('Query: getFavoriteProducts');
+		return await this.productService.getFavoriteProducts(memberId, input);
 	}
 
 	@Roles(MemberType.ADMIN)
