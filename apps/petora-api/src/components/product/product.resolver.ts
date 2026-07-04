@@ -62,9 +62,12 @@ export class ProductResolver {
 
 	@UseGuards(WithoutGuard)
 	@Query(() => [Product])
-	public async getRelatedProducts(@Args('productId') input: string): Promise<Product[]> {
+	public async getRelatedProducts(
+		@Args('productId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<Product[]> {
 		console.log('Query: getRelatedProducts');
-		return await this.productService.getRelatedProducts(input);
+		return await this.productService.getRelatedProducts(memberId, input);
 	}
 
 	@UseGuards(AuthGuard)
