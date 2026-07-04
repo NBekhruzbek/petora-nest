@@ -10,7 +10,7 @@ import { StatisticModifier, T } from '../../libs/types/common';
 import { QnaStatus } from '../../libs/enums/qna.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { QuestionUpdateInput } from '../../libs/dto/qna/qna.update';
-import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
@@ -166,6 +166,7 @@ export class QnaService {
 						list: [
 							{ $skip: (input.page - 1) * input.limit },
 							{ $limit: input.limit },
+							lookupAuthMemberLiked(memberId),
 							lookupMember,
 							{ $unwind: '$memberData' },
 						],
