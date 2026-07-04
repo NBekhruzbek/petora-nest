@@ -9,7 +9,7 @@ import { Direction, Message } from '../../libs/enums/common.enum';
 import { Model, Types } from 'mongoose';
 import { CommentUpdate } from '../../libs/dto/comment/comment.update';
 import { StatisticModifier, T } from '../../libs/types/common';
-import { lookupMember } from '../../libs/config';
+import { lookupAuthMemberLiked, lookupMember } from '../../libs/config';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
@@ -113,7 +113,7 @@ export class CommentService {
 					list: [
 						{ $skip: (input.page - 1) * input.limit },
 						{ $limit: input.limit },
-						//meLiked
+						lookupAuthMemberLiked(memberId, '$_id'),
 						lookupMember,
 						{ $unwind: '$memberData' },
 					],
