@@ -83,10 +83,10 @@ export class Member {
 	memberViews: number;
 
 	@Field(() => Int)
-	memberComments: number;
+	memberReviews: number;
 
-	@Field(() => Int)
-	memberRank: number;
+	@Field(() => Number)
+	memberRating: number;
 
 	@Field(() => Int)
 	memberWarnings: number;

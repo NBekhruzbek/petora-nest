@@ -22,6 +22,7 @@ export enum Message {
 	NOT_USER_ADDRESS_OR_PHONE = 'Please check You entered deliveryAddress or your phone number in MyPage -> MyProfile -> PersonalInfo!',
 	BOOKING_TIME_NOT_AVAILABLE = 'Please choose other time, this booking time is not available!',
 	NOT_ALLOWED_BOOKING_CANCEL = 'You can not cansel the booking!',
+	ALREADY_REVIEWED = 'You have already reviewed this item!',
 }
 
 export enum Direction {

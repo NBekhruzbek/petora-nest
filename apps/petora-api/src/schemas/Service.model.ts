@@ -55,14 +55,22 @@ const ServiceSchema = new Schema(
 			type: Number,
 			default: 0,
 		},
+
 		serviceViews: {
 			type: Number,
 			default: 0,
 		},
+
 		serviceReviews: {
 			type: Number,
 			default: 0,
 		},
+
+		serviceRating: {
+			type: Number,
+			default: 0,
+		},
+
 		memberId: {
 			type: Types.ObjectId,
 			required: true,

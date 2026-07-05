@@ -5,7 +5,7 @@ export const availableAgentSorts = [
 	'updatedAt',
 	'memberLikes',
 	'memberViews',
-	'memberRank',
+	'memberRating',
 	'memberBooking',
 ];
 

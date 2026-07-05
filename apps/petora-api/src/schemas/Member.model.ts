@@ -119,12 +119,12 @@ const MemberSchema = new Schema(
 			default: 0,
 		},
 
-		memberComments: {
+		memberReviews: {
 			type: Number,
 			default: 0,
 		},
 
-		memberRank: {
+		memberRating: {
 			type: Number,
 			default: 0,
 		},

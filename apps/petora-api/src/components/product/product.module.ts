@@ -20,5 +20,6 @@ import { LikeModule } from '../like/like.module';
 		LikeModule,
 	],
 	providers: [ProductService, ProductResolver],
+	exports: [ProductService],
 })
 export class ProductModule {}
