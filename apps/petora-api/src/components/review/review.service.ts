@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ReviewGroup, ReviewStatus } from '../../libs/enums/review.enum';
-import { ReviewInput } from '../../libs/dto/review/review.input';
+import { ReviewInput, ReviewsInquiry } from '../../libs/dto/review/review.input';
 import { ServiceService } from '../service/service.service';
 import { ProductService } from '../product/product.service';
-import { StatisticModifier } from '../../libs/types/common';
-import { shapeIntoMongoObjectId } from '../../libs/config';
+import { StatisticModifier, T } from '../../libs/types/common';
+import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { MemberService } from '../member/member.service';
-import { Message } from '../../libs/enums/common.enum';
-import { Review } from '../../libs/dto/review/review';
+import { Direction, Message } from '../../libs/enums/common.enum';
+import { Review, ReviewStats, Reviews } from '../../libs/dto/review/review';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
@@ -19,6 +19,8 @@ export class ReviewService {
 		private readonly serviceService: ServiceService,
 		private readonly productService: ProductService,
 	) {}
+
+	/** MUTATIONS **/
 
 	public async createNewReview(memberId: Types.ObjectId, input: ReviewInput): Promise<Review> {
 		input.memberId = memberId;
@@ -44,6 +46,39 @@ export class ReviewService {
 
 		return result;
 	}
+
+	/** QUERIES **/
+
+	public async getReviews(input: ReviewsInquiry): Promise<Reviews> {
+		const { reviewGroup, reviewRefId } = input.search;
+		const match: T = { reviewGroup, reviewRefId, reviewStatus: ReviewStatus.ACTIVE };
+		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
+
+		const result = await this.reviewModel.aggregate([
+			{ $match: match },
+			{ $sort: sort },
+			{
+				$facet: {
+					list: [
+						{ $skip: (input.page - 1) * input.limit },
+						{ $limit: input.limit },
+						lookupMember,
+						{ $unwind: '$memberData' },
+					],
+					metaCounter: [{ $count: 'total' }],
+					distribution: [{ $group: { _id: '$reviewRating', count: { $sum: 1 } } }],
+				},
+			},
+		]);
+		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const { list, metaCounter, distribution } = result[0];
+		const totalReviews = metaCounter[0]?.total ?? 0;
+
+		return { list, metaCounter, stats: this.buildReviewStats(distribution, totalReviews) };
+	}
+
+	/** HELPERS */
 
 	private getStatsTarget(reviewGroup: ReviewGroup) {
 		return {
@@ -91,5 +126,18 @@ export class ReviewService {
 			{ $group: { _id: null, avgRating: { $avg: '$reviewRating' } } },
 		]);
 		return avg ? Math.round(avg.avgRating * 10) / 10 : fallbackRating;
+	}
+
+	private buildReviewStats(distribution: { _id: number; count: number }[], totalReviews: number): ReviewStats {
+		const countsByStar = new Map(distribution.map((entry) => [entry._id, entry.count]));
+		const ratingDistribution = [5, 4, 3, 2, 1].map((star) => {
+			const count = countsByStar.get(star) ?? 0;
+			return { star, count, percentage: totalReviews ? Math.round((count / totalReviews) * 100) : 0 };
+		});
+
+		const ratingSum = distribution.reduce((sum, entry) => sum + entry._id * entry.count, 0);
+		const averageRating = totalReviews ? Math.round((ratingSum / totalReviews) * 10) / 10 : 0;
+
+		return { totalReviews, averageRating, ratingDistribution };
 	}
 }

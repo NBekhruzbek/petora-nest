@@ -1,6 +1,8 @@
-import { IsNotEmpty, IsNumber, IsOptional, Max, Min } from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumber, IsOptional, Max, Min } from 'class-validator';
 import { ReviewGroup } from '../../enums/review.enum';
-import { Field, InputType } from '@nestjs/graphql';
+import { Field, InputType, Int } from '@nestjs/graphql';
+import { Direction } from '../../enums/common.enum';
+import { availableReviewSorts } from '../../config';
 import { Types } from 'mongoose';
 
 @InputType()
@@ -29,4 +31,41 @@ export class ReviewInput {
 	reviewRating: number;
 
 	memberId?: Types.ObjectId;
+}
+
+@InputType()
+class RISearch {
+	@IsNotEmpty()
+	@Field(() => ReviewGroup)
+	reviewGroup: ReviewGroup;
+
+	@IsNotEmpty()
+	@Field(() => String)
+	reviewRefId: string;
+}
+
+@InputType()
+export class ReviewsInquiry {
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	page: number;
+
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	limit: number;
+
+	@IsOptional()
+	@IsIn(availableReviewSorts)
+	@Field(() => String, { nullable: true })
+	sort?: string;
+
+	@IsOptional()
+	@Field(() => Direction, { nullable: true })
+	direction?: Direction;
+
+	@IsNotEmpty()
+	@Field(() => RISearch)
+	search: RISearch;
 }
