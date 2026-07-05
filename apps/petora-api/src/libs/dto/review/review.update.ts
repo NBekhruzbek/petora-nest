@@ -24,3 +24,14 @@ export class ReviewUpdate {
 	@Field(() => Number, { nullable: true })
 	reviewRating?: number;
 }
+
+@InputType()
+export class AdminReviewUpdate {
+	@IsNotEmpty()
+	@Field(() => String)
+	reviewId: Types.ObjectId;
+
+	@IsOptional()
+	@Field(() => ReviewStatus, { nullable: true })
+	reviewStatus?: ReviewStatus;
+}

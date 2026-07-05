@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ReviewGroup, ReviewStatus } from '../../libs/enums/review.enum';
 import { ReviewInput, ReviewsInquiry } from '../../libs/dto/review/review.input';
-import { ReviewUpdate } from '../../libs/dto/review/review.update';
+import { AdminReviewUpdate, ReviewUpdate } from '../../libs/dto/review/review.update';
 import { ServiceService } from '../service/service.service';
 import { ProductService } from '../product/product.service';
 import { StatisticModifier, T } from '../../libs/types/common';
@@ -60,6 +60,29 @@ export class ReviewService {
 
 		if (reviewRating !== undefined) {
 			const newRating = await this.computeAverageRating(result.reviewGroup, result.reviewRefId, result.reviewRating);
+			await this.syncTargetRating(result.reviewGroup, result.reviewRefId, newRating);
+		}
+
+		return result;
+	}
+
+	public async updateReviewByAdmin(input: AdminReviewUpdate): Promise<Review> {
+		const { reviewId } = input;
+
+		const existing = await this.reviewModel.findById(reviewId);
+		if (!existing) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const result = await this.reviewModel.findByIdAndUpdate(reviewId, input, { new: true });
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		const wasActive = existing.reviewStatus === ReviewStatus.ACTIVE;
+		const isActive = result.reviewStatus === ReviewStatus.ACTIVE;
+
+		if (wasActive !== isActive) {
+			const { reviewsKey, statsEditor } = this.getStatsTarget(result.reviewGroup);
+			await statsEditor({ _id: result.reviewRefId, targetKey: reviewsKey, modifier: isActive ? 1 : -1 });
+
+			const newRating = await this.computeAverageRating(result.reviewGroup, result.reviewRefId, 0);
 			await this.syncTargetRating(result.reviewGroup, result.reviewRefId, newRating);
 		}
 

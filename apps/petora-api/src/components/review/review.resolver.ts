@@ -1,6 +1,6 @@
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { ReviewInput, ReviewsInquiry } from '../../libs/dto/review/review.input';
-import { ReviewUpdate } from '../../libs/dto/review/review.update';
+import { AdminReviewUpdate, ReviewUpdate } from '../../libs/dto/review/review.update';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { WithoutGuard } from '../auth/guards/without.guard';
@@ -9,6 +9,9 @@ import { ReviewService } from './review.service';
 import { UseGuards } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { shapeIntoMongoObjectId } from '../../libs/config';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { MemberType } from '../../libs/enums/member.enum';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Resolver()
 export class ReviewResolver {
@@ -41,5 +44,16 @@ export class ReviewResolver {
 		console.log('Query: getReviews');
 		input.search.reviewRefId = shapeIntoMongoObjectId(input.search.reviewRefId);
 		return await this.reviewService.getReviews(input);
+	}
+
+	/** ADMIN */
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation((returns) => Review)
+	public async updateReviewByAdmin(@Args('input') input: AdminReviewUpdate): Promise<Review> {
+		console.log('Mutation: updateReviewByAdmin');
+		input.reviewId = shapeIntoMongoObjectId(input.reviewId);
+		return await this.reviewService.updateReviewByAdmin(input);
 	}
 }
