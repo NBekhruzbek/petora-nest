@@ -1,17 +1,17 @@
-import { AuthMember } from '../auth/decorators/authMember.decorator';
-import { ReviewInput, ReviewsInquiry } from '../../libs/dto/review/review.input';
 import { AdminReviewUpdate, ReviewUpdate } from '../../libs/dto/review/review.update';
+import { ReviewInput, ReviewsInquiry } from '../../libs/dto/review/review.input';
+import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { AuthGuard } from '../auth/guards/auth.guard';
-import { WithoutGuard } from '../auth/guards/without.guard';
 import { Review, Reviews } from '../../libs/dto/review/review';
-import { ReviewService } from './review.service';
-import { UseGuards } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { WithoutGuard } from '../auth/guards/without.guard';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { MemberType } from '../../libs/enums/member.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { ReviewService } from './review.service';
+import { UseGuards } from '@nestjs/common';
+import { Types } from 'mongoose';
 
 @Resolver()
 export class ReviewResolver {
@@ -55,5 +55,17 @@ export class ReviewResolver {
 		console.log('Mutation: updateReviewByAdmin');
 		input.reviewId = shapeIntoMongoObjectId(input.reviewId);
 		return await this.reviewService.updateReviewByAdmin(input);
+	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation((returns) => Review)
+	public async removeReviewByAdmin(
+		@Args('reviewId') input: string,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<Review> {
+		console.log('Mutation: removeReviewByAdmin');
+		const reviewId = shapeIntoMongoObjectId(input);
+		return await this.reviewService.removeReviewByAdmin(reviewId);
 	}
 }

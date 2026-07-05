@@ -1,14 +1,14 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ReviewGroup, ReviewStatus } from '../../libs/enums/review.enum';
-import { ReviewInput, ReviewsInquiry } from '../../libs/dto/review/review.input';
 import { AdminReviewUpdate, ReviewUpdate } from '../../libs/dto/review/review.update';
+import { ReviewInput, ReviewsInquiry } from '../../libs/dto/review/review.input';
+import { Review, ReviewStats, Reviews } from '../../libs/dto/review/review';
+import { ReviewGroup, ReviewStatus } from '../../libs/enums/review.enum';
+import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { Direction, Message } from '../../libs/enums/common.enum';
+import { StatisticModifier, T } from '../../libs/types/common';
 import { ServiceService } from '../service/service.service';
 import { ProductService } from '../product/product.service';
-import { StatisticModifier, T } from '../../libs/types/common';
-import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { MemberService } from '../member/member.service';
-import { Direction, Message } from '../../libs/enums/common.enum';
-import { Review, ReviewStats, Reviews } from '../../libs/dto/review/review';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
@@ -85,6 +85,14 @@ export class ReviewService {
 			const newRating = await this.computeAverageRating(result.reviewGroup, result.reviewRefId, 0);
 			await this.syncTargetRating(result.reviewGroup, result.reviewRefId, newRating);
 		}
+
+		return result;
+	}
+
+	public async removeReviewByAdmin(reviewId: Types.ObjectId): Promise<Review> {
+		const search: T = { _id: reviewId, reviewStatus: ReviewStatus.DELETE };
+		const result = await this.reviewModel.findOneAndDelete(search).exec();
+		if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
 
 		return result;
 	}
