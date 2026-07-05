@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ReviewGroup, ReviewStatus } from '../../libs/enums/review.enum';
 import { ReviewInput, ReviewsInquiry } from '../../libs/dto/review/review.input';
+import { ReviewUpdate } from '../../libs/dto/review/review.update';
 import { ServiceService } from '../service/service.service';
 import { ProductService } from '../product/product.service';
 import { StatisticModifier, T } from '../../libs/types/common';
@@ -43,6 +44,24 @@ export class ReviewService {
 		const reviewRefId = result.reviewRefId;
 		const newRating = await this.computeAverageRating(result.reviewGroup, reviewRefId, result.reviewRating);
 		await this.syncTargetStats(result.reviewGroup, reviewRefId, newRating);
+
+		return result;
+	}
+
+	public async updateReview(memberId: Types.ObjectId, input: ReviewUpdate): Promise<Review> {
+		const { reviewId, reviewRating } = input;
+
+		const result = await this.reviewModel.findOneAndUpdate(
+			{ _id: reviewId, memberId: memberId, reviewStatus: ReviewStatus.ACTIVE },
+			input,
+			{ new: true },
+		);
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		if (reviewRating !== undefined) {
+			const newRating = await this.computeAverageRating(result.reviewGroup, result.reviewRefId, result.reviewRating);
+			await this.syncTargetRating(result.reviewGroup, result.reviewRefId, newRating);
+		}
 
 		return result;
 	}
@@ -108,9 +127,17 @@ export class ReviewService {
 		reviewRefId: Types.ObjectId,
 		newRating: number,
 	): Promise<void> {
-		const { reviewsKey, ratingKey, statsEditor, getTarget } = this.getStatsTarget(reviewGroup);
-
+		const { reviewsKey, statsEditor } = this.getStatsTarget(reviewGroup);
 		await statsEditor({ _id: reviewRefId, targetKey: reviewsKey, modifier: 1 });
+		await this.syncTargetRating(reviewGroup, reviewRefId, newRating);
+	}
+
+	private async syncTargetRating(
+		reviewGroup: ReviewGroup,
+		reviewRefId: Types.ObjectId,
+		newRating: number,
+	): Promise<void> {
+		const { ratingKey, statsEditor, getTarget } = this.getStatsTarget(reviewGroup);
 
 		const target = await getTarget(reviewRefId);
 		await statsEditor({ _id: reviewRefId, targetKey: ratingKey, modifier: newRating - target[ratingKey] });

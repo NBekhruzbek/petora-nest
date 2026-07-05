@@ -1,5 +1,6 @@
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { ReviewInput, ReviewsInquiry } from '../../libs/dto/review/review.input';
+import { ReviewUpdate } from '../../libs/dto/review/review.update';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { WithoutGuard } from '../auth/guards/without.guard';
@@ -21,6 +22,17 @@ export class ReviewResolver {
 	): Promise<Review> {
 		console.log('Mutation: createNewReview');
 		return await this.reviewService.createNewReview(memberId, input);
+	}
+
+	@UseGuards(AuthGuard)
+	@Mutation((returns) => Review)
+	public async updateReview(
+		@Args('input') input: ReviewUpdate,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<Review> {
+		console.log('Mutation: updateReview');
+		input.reviewId = shapeIntoMongoObjectId(input.reviewId);
+		return await this.reviewService.updateReview(memberId, input);
 	}
 
 	@UseGuards(WithoutGuard)
