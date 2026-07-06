@@ -71,6 +71,11 @@ const ServiceSchema = new Schema(
 			default: 0,
 		},
 
+		serviceRank: {
+			type: Number,
+			default: 0,
+		},
+
 		memberId: {
 			type: Types.ObjectId,
 			required: true,

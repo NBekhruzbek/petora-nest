@@ -88,6 +88,9 @@ export class Member {
 	@Field(() => Number)
 	memberRating: number;
 
+	@Field(() => Number)
+	memberRank: number;
+
 	@Field(() => Int)
 	memberWarnings: number;
 

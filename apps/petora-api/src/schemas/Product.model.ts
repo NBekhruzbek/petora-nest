@@ -88,6 +88,11 @@ const ProductSchema = new Schema(
 			type: Number,
 			default: 0,
 		},
+
+		productRank: {
+			type: Number,
+			default: 0,
+		},
 	},
 	{ timestamps: true, collection: 'products' },
 );

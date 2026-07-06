@@ -47,6 +47,9 @@ export class Service {
 	@Field(() => Number)
 	serviceRating: number;
 
+	@Field(() => Number)
+	serviceRank: number;
+
 	@Field(() => String)
 	memberId: Types.ObjectId;
 

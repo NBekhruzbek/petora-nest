@@ -1,7 +1,7 @@
-import { Controller, Get, Logger } from '@nestjs/common';
+import { BATCH_ROLLBACK, BATCH_TOP_AGENTS, BATCH_TOP_PRODUCTS, BATCH_TOP_SERVICES } from './lib/config';
 import { PetoraBatchService } from './petora-batch.service';
 import { Cron, Interval, Timeout } from '@nestjs/schedule';
-import { BATCH_ROLLBACK, BATCH_TOP_AGENTS, BATCH_TOP_PRODUCTS, BATCH_TOP_SERVICES } from './lib/config';
+import { Controller, Get, Logger } from '@nestjs/common';
 
 @Controller()
 export class PetoraBatchController {
@@ -14,7 +14,7 @@ export class PetoraBatchController {
 		this.logger.debug('BATCH SERVER READY!');
 	}
 
-	@Cron('00 * * * * *', { name: BATCH_ROLLBACK })
+	@Cron('00 00 00 * * *', { name: BATCH_ROLLBACK })
 	public async batchRollback() {
 		try {
 			this.logger['context'] = BATCH_ROLLBACK;
@@ -25,7 +25,7 @@ export class PetoraBatchController {
 		}
 	}
 
-	@Cron('15 * * * * *', { name: BATCH_TOP_PRODUCTS })
+	@Cron('15 00 00 * * *', { name: BATCH_TOP_PRODUCTS })
 	public async batchTopProducts() {
 		try {
 			this.logger['context'] = BATCH_TOP_PRODUCTS;
@@ -36,7 +36,7 @@ export class PetoraBatchController {
 		}
 	}
 
-	@Cron('30 * * * * *', { name: BATCH_TOP_SERVICES })
+	@Cron('30 00 00 * * *', { name: BATCH_TOP_SERVICES })
 	public async batchTopServices() {
 		try {
 			this.logger['context'] = BATCH_TOP_SERVICES;
@@ -47,7 +47,7 @@ export class PetoraBatchController {
 		}
 	}
 
-	@Cron('45 * * * * *', { name: BATCH_TOP_AGENTS })
+	@Cron('45 00 00 * * *', { name: BATCH_TOP_AGENTS })
 	public async batchTopAgents() {
 		try {
 			this.logger['context'] = BATCH_TOP_AGENTS;
