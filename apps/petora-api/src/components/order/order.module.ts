@@ -7,6 +7,7 @@ import OrderItemSchema from '../../schemas/OrderItem.model';
 import MemberSchema from '../../schemas/Member.model';
 import { AuthModule } from '../auth/auth.module';
 import { MemberModule } from '../member/member.module';
+import { ProductModule } from '../product/product.module';
 
 @Module({
 	imports: [
@@ -26,6 +27,7 @@ import { MemberModule } from '../member/member.module';
 		]),
 		AuthModule,
 		MemberModule,
+		ProductModule,
 	],
 	providers: [OrderResolver, OrderService],
 })

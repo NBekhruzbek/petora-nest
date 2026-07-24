@@ -62,6 +62,9 @@ export class Product {
 	@Field(() => Number)
 	productRank: number;
 
+	@Field(() => Int)
+	productSoldTimes: number;
+
 	@Field(() => Date)
 	createdAt: Date;
 

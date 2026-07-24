@@ -12,6 +12,7 @@ export const availableAgentSorts = [
 export const availableProductSorts = [
 	'createdAt',
 	'productRating',
+	'productRank',
 	'productLikes',
 	'productSoldTimes',
 	'productPriceAfterDiscount',

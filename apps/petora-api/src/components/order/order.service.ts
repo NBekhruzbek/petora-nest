@@ -8,6 +8,7 @@ import { shapeIntoMongoObjectId } from '../../libs/config';
 import { Member } from '../../libs/dto/member/member';
 import { OrderUpdateInput } from '../../libs/dto/order/order.update';
 import { MemberService } from '../member/member.service';
+import { ProductService } from '../product/product.service';
 
 @Injectable()
 export class OrderService {
@@ -16,6 +17,7 @@ export class OrderService {
 		@InjectModel('OrderItem') private readonly orderItemModel: Model<OrderItemInput>,
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
 		private readonly memberService: MemberService,
+		private readonly productService: ProductService,
 	) {}
 
 	public async createOrder(memberId: Types.ObjectId, input: OrderItemInput[]): Promise<Order> {
@@ -66,6 +68,11 @@ export class OrderService {
 				item.orderId = orderId;
 				item.productId = shapeIntoMongoObjectId(item.productId);
 				await this.orderItemModel.create(item);
+				await this.productService.productStatsEditor({
+					_id: item.productId,
+					targetKey: 'productSoldTimes',
+					modifier: 1,
+				});
 				return 'INSERTED';
 			});
 

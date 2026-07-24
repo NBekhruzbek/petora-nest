@@ -93,6 +93,11 @@ const ProductSchema = new Schema(
 			type: Number,
 			default: 0,
 		},
+
+		productSoldTimes: {
+			type: Number,
+			default: 0,
+		},
 	},
 	{ timestamps: true, collection: 'products' },
 );
