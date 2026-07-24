@@ -18,10 +18,10 @@ export enum Message {
 	TOKEN_NOT_EXIST = 'Bearer Token is not provided!',
 	ONLY_SPECIFIC_ROLES_ALLOWED = 'Allowed only for members with specific roles!',
 	NOT_ALLOWED_REQUEST = 'Not Allowed Request!',
-	PROVIDE_ALLOWED_FORMAT = 'Please provide jgp, jpeg or png images!',
+	PROVIDE_ALLOWED_FORMAT = 'Please provide jpg, jpeg or png images!',
 	NOT_USER_ADDRESS_OR_PHONE = 'Please check You entered deliveryAddress or your phone number in MyPage -> MyProfile -> PersonalInfo!',
 	BOOKING_TIME_NOT_AVAILABLE = 'Please choose other time, this booking time is not available!',
-	NOT_ALLOWED_BOOKING_CANCEL = 'You can not cansel the booking!',
+	NOT_ALLOWED_BOOKING_CANCEL = 'You can not cancel the booking!',
 	ALREADY_REVIEWED = 'You have already reviewed this item!',
 }
 

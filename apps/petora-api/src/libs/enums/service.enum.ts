@@ -25,8 +25,8 @@ export enum ServiceLocation {
 	SUWON = 'SUWON',
 	GYEONGJU = 'GYEONGJU',
 	GWANGJU = 'GWANGJU',
-	CHONJU = 'CHONJU',
-	DAEDJON = 'DAEDJON',
+	JEONJU = 'JEONJU',
+	DAEJEON = 'DAEJEON',
 	JEJU = 'JEJU',
 }
 registerEnumType(ServiceLocation, { name: 'ServiceLocation' });

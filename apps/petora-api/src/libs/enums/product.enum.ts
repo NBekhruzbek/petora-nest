@@ -20,6 +20,7 @@ registerEnumType(ProductStatus, { name: 'ProductStatus' });
 export enum ProductPetType {
 	DOG = 'DOG',
 	CAT = 'CAT',
+	RABBIT = 'RABBIT',
 	BIRD = 'BIRD',
 	HAMSTER = 'HAMSTER',
 	OTHER = 'OTHER',
