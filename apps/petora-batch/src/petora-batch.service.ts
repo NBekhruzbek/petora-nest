@@ -61,8 +61,8 @@ export class PetoraBatchService {
 			.exec();
 
 		const promisedList = products.map(async (ele: Product) => {
-			const { _id, productRating, productLikes, productViews } = ele;
-			const rank = productRating * 10 + productLikes * 2 + productViews * 1;
+			const { _id, productRating, productLikes, productViews, productSoldTimes } = ele;
+			const rank = productRating * 10 + productSoldTimes * 5 + productLikes * 2 + productViews * 1;
 			return await this.productModel.findByIdAndUpdate(_id, { productRank: rank });
 		});
 		await Promise.all(promisedList);
