@@ -136,22 +136,51 @@ export class ServiceService {
 
 		this.shapeMatchQuery(match, input);
 
-		const result = await this.serviceModel
-			.aggregate([
-				{ $match: match },
-				{ $sort: sort },
+		const pipeline: any[] = [{ $match: match }];
+
+		// onlyLiked: keep only services the authenticated member has favorited, so it
+		// composes with the other filters (category / location / price / text).
+		if (input.search.onlyLiked && _id) {
+			pipeline.push(
 				{
-					$facet: {
-						list: [
-							{ $skip: (input.page - 1) * input.limit },
-							{ $limit: input.limit },
-							lookupAuthMemberLiked(memberId, '$_id'),
+					$lookup: {
+						from: 'likes',
+						let: { localServiceId: '$_id' },
+						pipeline: [
+							{
+								$match: {
+									$expr: {
+										$and: [
+											{ $eq: ['$likeRefId', '$$localServiceId'] },
+											{ $eq: ['$memberId', memberId] },
+											{ $eq: ['$likeGroup', LikeGroup.SERVICE] },
+										],
+									},
+								},
+							},
 						],
-						metaCounter: [{ $count: 'total' }],
+						as: 'myLikes',
 					},
 				},
-			])
-			.exec();
+				{ $match: { myLikes: { $ne: [] } } },
+			);
+		}
+
+		pipeline.push(
+			{ $sort: sort },
+			{
+				$facet: {
+					list: [
+						{ $skip: (input.page - 1) * input.limit },
+						{ $limit: input.limit },
+						lookupAuthMemberLiked(memberId, '$_id'),
+					],
+					metaCounter: [{ $count: 'total' }],
+				},
+			},
+		);
+
+		const result = await this.serviceModel.aggregate(pipeline).exec();
 		if (!result[0].list.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		return result[0];

@@ -7,6 +7,7 @@ export const availableAgentSorts = [
 	'memberViews',
 	'memberRating',
 	'memberBooking',
+	'memberRank',
 ];
 
 export const availableProductSorts = [
@@ -18,7 +19,14 @@ export const availableProductSorts = [
 	'productPriceAfterDiscount',
 ];
 
-export const availableServiceSorts = ['createdAt', 'serviceRating', 'serviceLikes', 'mostBooked', 'servicePrice'];
+export const availableServiceSorts = [
+	'createdAt',
+	'serviceRating',
+	'serviceLikes',
+	'mostBooked',
+	'servicePrice',
+	'serviceRank',
+];
 
 export const availableBookingSorts = ['createdAt', 'updatedAt'];
 
