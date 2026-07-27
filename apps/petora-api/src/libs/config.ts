@@ -100,6 +100,40 @@ export const lookupAuthMemberLiked = (memberId: T, targetRefId: string = '$_id')
 	};
 };
 
+/**
+ * Views are recorded once per (member, target), so an empty `meViewed` means the
+ * signed-in member has never opened the target. `memberId` is null for guests,
+ * which matches no view document and leaves everything marked unread.
+ */
+export const lookupAuthMemberViewed = (memberId: T, targetRefId: string = '$_id') => {
+	return {
+		$lookup: {
+			from: 'views',
+			let: {
+				localViewRefId: targetRefId,
+				localMemberId: memberId,
+			},
+			pipeline: [
+				{
+					$match: {
+						$expr: {
+							$and: [{ $eq: ['$viewRefId', '$$localViewRefId'] }, { $eq: ['$memberId', '$$localMemberId'] }],
+						},
+					},
+				},
+				{
+					$project: {
+						_id: 0,
+						memberId: 1,
+						viewRefId: 1,
+					},
+				},
+			],
+			as: 'meViewed',
+		},
+	};
+};
+
 export const lookupMember = {
 	$lookup: {
 		from: 'members',

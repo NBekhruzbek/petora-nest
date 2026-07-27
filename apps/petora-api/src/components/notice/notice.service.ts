@@ -7,7 +7,7 @@ import { NoticeDetail, Notices } from '../../libs/dto/notice/notice';
 import { NoticeInput, NoticeInquiry } from '../../libs/dto/notice/notice.input';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { NoticeStatus } from '../../libs/enums/notice.enum';
-import { shapeIntoMongoObjectId } from '../../libs/config';
+import { lookupAuthMemberViewed, shapeIntoMongoObjectId } from '../../libs/config';
 import { NoticeUpdateInput } from '../../libs/dto/notice/notice.update';
 import { ViewGroup } from '../../libs/enums/view.enum';
 
@@ -85,12 +85,15 @@ export class NoticeService {
 				await this.noticeStatsEditor({ _id: noticeId, targetKey: 'noticeViews', modifier: 1 });
 				result.noticeViews++;
 			}
+			// Reading the detail IS the view, so the caller can mark the row read
+			// without waiting for the list to be refetched.
+			result.meViewed = [{ memberId: memberId, viewRefId: noticeId }];
 		}
 
 		return result;
 	}
 
-	public async getNotices(input: NoticeInquiry): Promise<Notices> {
+	public async getNotices(memberId: Types.ObjectId | null, input: NoticeInquiry): Promise<Notices> {
 		const { text } = input.search;
 		const match: T = { noticeStatus: NoticeStatus.ACTIVE };
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
@@ -108,8 +111,22 @@ export class NoticeService {
 				{ $sort: sort },
 				{
 					$facet: {
-						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
+						list: [
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+							lookupAuthMemberViewed(memberId),
+						],
 						metaCounter: [{ $count: 'total' }],
+						// Facet branches see the whole matched set, so this counts unread
+						// notices across every page — which is what the header badge needs.
+						// Guests hold no view records, so everything stays unread for them.
+						unviewedCounter: memberId
+							? [
+									lookupAuthMemberViewed(memberId),
+									{ $match: { 'meViewed.0': { $exists: false } } },
+									{ $count: 'total' },
+								]
+							: [{ $count: 'total' }],
 					},
 				},
 			])

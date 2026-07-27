@@ -22,3 +22,13 @@ export class View {
 	@Field(() => Date)
 	updatedAt: Date;
 }
+
+/** Projection of `lookupAuthMemberViewed` — empty array means "not read yet". */
+@ObjectType()
+export class MeViewed {
+	@Field(() => String)
+	memberId: Types.ObjectId;
+
+	@Field(() => String)
+	viewRefId: Types.ObjectId;
+}

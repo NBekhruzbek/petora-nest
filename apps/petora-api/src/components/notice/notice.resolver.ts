@@ -94,6 +94,6 @@ export class NoticeResolver {
 		@AuthMember('_id') memberId: Types.ObjectId | null,
 	): Promise<Notices> {
 		console.log('Query: getNotices');
-		return await this.noticeService.getNotices(input);
+		return await this.noticeService.getNotices(memberId, input);
 	}
 }

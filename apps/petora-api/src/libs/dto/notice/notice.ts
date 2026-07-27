@@ -2,6 +2,7 @@ import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { Types } from 'mongoose';
 import { NoticeStatus, NoticeType } from '../../enums/notice.enum';
 import { TotalCounter } from '../member/member';
+import { MeViewed } from '../view/view';
 
 @ObjectType()
 export class NoticeDetail {
@@ -34,6 +35,9 @@ export class NoticeDetail {
 
 	@Field(() => Date)
 	updatedAt: Date;
+
+	@Field(() => [MeViewed], { nullable: true })
+	meViewed?: MeViewed[];
 }
 
 @ObjectType()
@@ -43,4 +47,8 @@ export class Notices {
 
 	@Field(() => [TotalCounter], { nullable: true })
 	metaCounter: TotalCounter[];
+
+	/** Unread across every matching notice, not just the requested page. */
+	@Field(() => [TotalCounter], { nullable: true })
+	unviewedCounter?: TotalCounter[];
 }
