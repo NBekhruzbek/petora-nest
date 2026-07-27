@@ -89,10 +89,11 @@ export class FaqService {
 	}
 
 	public async getAllFaqsByAdmin(input: FaqsInquiry): Promise<Faqs> {
-		const { text } = input.search;
+		const { faqType, text } = input.search;
 		const match: T = { faqStatus: { $in: [FaqStatus.ACTIVE, FaqStatus.HIDE] } };
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
+		if (faqType) match.faqType = faqType;
 		if (text)
 			match.$or = [{ faqTitle: { $regex: new RegExp(text, 'i') } }, { faqContent: { $regex: new RegExp(text, 'i') } }];
 
@@ -114,10 +115,11 @@ export class FaqService {
 	}
 
 	public async getFaqs(input: FaqsInquiry): Promise<Faqs> {
-		const { text } = input.search;
+		const { faqType, text } = input.search;
 		const match: T = { faqStatus: FaqStatus.ACTIVE };
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
+		if (faqType) match.faqType = faqType;
 		if (text)
 			match.$or = [{ faqTitle: { $regex: new RegExp(text, 'i') } }, { faqContent: { $regex: new RegExp(text, 'i') } }];
 

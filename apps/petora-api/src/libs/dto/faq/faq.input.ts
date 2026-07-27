@@ -29,6 +29,10 @@ export class FaqInput {
 @InputType()
 class FaqISearch {
 	@IsOptional()
+	@Field(() => FaqType, { nullable: true })
+	faqType?: FaqType;
+
+	@IsOptional()
 	@Field(() => String, { nullable: true })
 	text?: string;
 }
