@@ -1,5 +1,5 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
-import { IsIn, IsNotEmpty, IsOptional, Length, Min } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, Min } from 'class-validator';
 import { CommentGroup } from '../../enums/comment.enum';
 import { Direction } from '../../enums/common.enum';
 import { availableCommentSorts } from '../../config';
@@ -11,8 +11,9 @@ export class CommentInput {
 	@Field(() => CommentGroup)
 	commentGroup: CommentGroup;
 
+	// No length ceiling: comments double as Q&A answers, which need room for a
+	// real explanation.
 	@IsNotEmpty()
-	@Length(1, 100)
 	@Field(() => String)
 	commentContent: string;
 

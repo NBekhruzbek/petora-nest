@@ -1,5 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { IsNotEmpty, IsOptional, Length } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 import { CommentStatus } from '../../enums/comment.enum';
 import { Types } from 'mongoose';
 
@@ -13,8 +13,9 @@ export class CommentUpdate {
 	@Field(() => CommentStatus, { nullable: true })
 	commentStatus?: CommentStatus;
 
+	// Kept in step with CommentInput — an edit must not be stricter than the
+	// original write.
 	@IsOptional()
-	@Length(1, 100)
 	@Field(() => String, { nullable: true })
 	commentContent?: string;
 }
