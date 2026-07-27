@@ -117,22 +117,51 @@ export class ProductService {
 
 		this.shapeMatchQuery(match, input);
 
-		const result = await this.productModel
-			.aggregate([
-				{ $match: match },
-				{ $sort: sort },
+		const pipeline: any[] = [{ $match: match }];
+
+		// onlyLiked: keep only products the authenticated member has favorited, so it
+		// composes with the other filters (pet type / category / price / text).
+		if (input.search.onlyLiked && memberId) {
+			pipeline.push(
 				{
-					$facet: {
-						list: [
-							{ $skip: (input.page - 1) * input.limit },
-							{ $limit: input.limit },
-							lookupAuthMemberLiked(memberId, '$_id'),
+					$lookup: {
+						from: 'likes',
+						let: { localProductId: '$_id' },
+						pipeline: [
+							{
+								$match: {
+									$expr: {
+										$and: [
+											{ $eq: ['$likeRefId', '$$localProductId'] },
+											{ $eq: ['$memberId', memberId] },
+											{ $eq: ['$likeGroup', LikeGroup.PRODUCT] },
+										],
+									},
+								},
+							},
 						],
-						metaCounter: [{ $count: 'total' }],
+						as: 'myLikes',
 					},
 				},
-			])
-			.exec();
+				{ $match: { myLikes: { $ne: [] } } },
+			);
+		}
+
+		pipeline.push(
+			{ $sort: sort },
+			{
+				$facet: {
+					list: [
+						{ $skip: (input.page - 1) * input.limit },
+						{ $limit: input.limit },
+						lookupAuthMemberLiked(memberId, '$_id'),
+					],
+					metaCounter: [{ $count: 'total' }],
+				},
+			},
+		);
+
+		const result = await this.productModel.aggregate(pipeline).exec();
 		if (!result[0].list.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		return result[0];
