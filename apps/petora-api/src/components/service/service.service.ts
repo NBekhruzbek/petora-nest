@@ -206,10 +206,14 @@ export class ServiceService {
 	}
 
 	private shapeMatchQuery(match: T, input: ServicesInquiry): void {
-		const { serviceType, serviceLocation, text, priceRange } = input.search;
+		const { serviceType, serviceStatus, serviceLocation, text, priceRange, memberId } = input.search;
 		if (serviceType && serviceType.length) match.serviceType = { $in: serviceType };
 		if (serviceLocation && serviceLocation.length) match.serviceLocation = { $in: serviceLocation };
 		if (text) match.serviceTitle = { $regex: new RegExp(text, 'i') };
+		if (memberId) match.memberId = shapeIntoMongoObjectId(memberId);
+		// Overrides the ACTIVE-only default so an owner can also list their
+		// paused and removed offers.
+		if (serviceStatus && serviceStatus.length) match.serviceStatus = { $in: serviceStatus };
 
 		if (priceRange) {
 			match.servicePrice = {};

@@ -85,6 +85,12 @@ class SISearch {
 	@IsOptional()
 	@Field(() => String, { nullable: true })
 	text?: string;
+
+	// Lets an agent pull their own catalogue in MyPage; combined with
+	// serviceStatus it also exposes the offers that are paused or removed.
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	memberId?: Types.ObjectId;
 }
 
 @InputType()
