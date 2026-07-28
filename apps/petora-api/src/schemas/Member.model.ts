@@ -58,6 +58,10 @@ const MemberSchema = new Schema(
 			default: 0,
 		},
 
+		memberApproach: {
+			type: String,
+		},
+
 		memberAddress: {
 			type: String,
 		},
@@ -91,6 +95,10 @@ const MemberSchema = new Schema(
 		},
 
 		memberSpecialty: {
+			type: String,
+		},
+
+		memberResponseTime: {
 			type: String,
 		},
 
