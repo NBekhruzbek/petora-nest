@@ -61,10 +61,14 @@ export class BookingService {
 
 		const { bookingId, ...updateData } = input;
 
+		// The published cancellation policy lets a customer cancel up to the
+		// appointment itself — not only while the agent has yet to accept. A
+		// confirmed booking is exactly the case the policy is written for, so
+		// PENDING alone would contradict it.
 		const search = {
 			userId: userId,
 			_id: bookingId,
-			bookingStatus: BookingStatus.PENDING,
+			bookingStatus: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
 		};
 
 		const result = await this.bookingModel.findOneAndUpdate(search, { $set: updateData }, { new: true }).exec();
