@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '../auth/auth.module';
 import { ServiceModule } from '../service/service.module';
 import BookingSchema from '../../schemas/Booking.model';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
 	imports: [
@@ -16,6 +17,7 @@ import BookingSchema from '../../schemas/Booking.model';
 		]),
 		AuthModule,
 		ServiceModule,
+		NotificationModule,
 	],
 	providers: [BookingService, BookingResolver],
 })

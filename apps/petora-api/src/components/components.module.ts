@@ -13,6 +13,7 @@ import { BookingModule } from './booking/booking.module';
 import { QnaModule } from './qna/qna.module';
 import { FaqModule } from './faq/faq.module';
 import { NoticeModule } from './notice/notice.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
 	imports: [
@@ -30,6 +31,7 @@ import { NoticeModule } from './notice/notice.module';
 		QnaModule,
 		FaqModule,
 		NoticeModule,
+		NotificationModule,
 	],
 })
 export class ComponentsModule {}

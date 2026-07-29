@@ -8,6 +8,7 @@ import MemberSchema from '../../schemas/Member.model';
 import { AuthModule } from '../auth/auth.module';
 import { MemberModule } from '../member/member.module';
 import { ProductModule } from '../product/product.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
 	imports: [
@@ -28,6 +29,7 @@ import { ProductModule } from '../product/product.module';
 		AuthModule,
 		MemberModule,
 		ProductModule,
+		NotificationModule,
 	],
 	providers: [OrderResolver, OrderService],
 })

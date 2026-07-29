@@ -38,6 +38,8 @@ export const availableFaqSorts = ['createdAt', 'updatedAt'];
 
 export const availableNoticeSorts = ['createdAt', 'updatedAt'];
 
+export const availableNotificationSorts = ['createdAt', 'updatedAt'];
+
 export const availableCommentSorts = ['createdAt', 'updatedAt'];
 
 export const availableReviewSorts = ['createdAt', 'reviewRating'];

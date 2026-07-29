@@ -10,12 +10,15 @@ import { Direction, Message } from '../../libs/enums/common.enum';
 import { BookingStatus } from '../../libs/enums/booking.enum';
 import { T } from '../../libs/types/common';
 import { BookingUpdateInput } from '../../libs/dto/booking/booking.update';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationGroup, NotificationType } from '../../libs/enums/notification.enum';
 
 @Injectable()
 export class BookingService {
 	constructor(
 		@InjectModel('Booking') private readonly bookingModel: Model<BookedInfo>,
 		private readonly serviceService: ServiceService,
+		private readonly notificationService: NotificationService,
 	) {}
 
 	/** MUTATIONS */
@@ -39,6 +42,16 @@ export class BookingService {
 
 		await this.serviceService.updateServiceBookingTimes(result.serviceId, 1);
 
+		await this.notificationService.createNotification({
+			notificationType: NotificationType.BOOKING_CREATED,
+			notificationGroup: NotificationGroup.BOOKINGS,
+			notificationTitle: 'New booking request',
+			notificationContent: `${service.serviceTitle} — ${this.whenLabel(result)}. Review it in Service Management.`,
+			notificationRefId: result._id,
+			authorId: userId,
+			receiverId: agentId,
+		});
+
 		return result;
 	}
 
@@ -58,6 +71,16 @@ export class BookingService {
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 
 		await this.serviceService.updateServiceBookingTimes(result.serviceId, -1);
+
+		await this.notificationService.createNotification({
+			notificationType: NotificationType.BOOKING_CANCELLED,
+			notificationGroup: NotificationGroup.BOOKINGS,
+			notificationTitle: 'Booking cancelled',
+			notificationContent: `${await this.serviceTitleOf(result.serviceId)} — ${this.whenLabel(result)} was cancelled by the customer.`,
+			notificationRefId: result._id,
+			authorId: userId,
+			receiverId: result.agentId,
+		});
 
 		//TODO: REFOUNDING SERVICE PRICE
 
@@ -82,6 +105,8 @@ export class BookingService {
 		if (result.bookingStatus === BookingStatus.REJECTED) {
 			await this.serviceService.updateServiceBookingTimes(result.serviceId, -1);
 		}
+
+		await this.notifyCustomerOfAgentDecision(agentId, result);
 
 		//TODO: IF BOOKING STATUS is REJECTED => REFOUNDING SERVICE PAYING
 
@@ -172,6 +197,62 @@ export class BookingService {
 	}
 
 	/** HELPERS **/
+
+	/**
+	 * A completed service asks for a review; the other transitions just report
+	 * the agent's decision. PENDING is skipped — it is the state the booking was
+	 * already in when the customer created it.
+	 */
+	private async notifyCustomerOfAgentDecision(agentId: Types.ObjectId, booking: BookedInfo): Promise<void> {
+		const copy: Partial<Record<BookingStatus, { type: NotificationType; title: string; body: string }>> = {
+			[BookingStatus.CONFIRMED]: {
+				type: NotificationType.BOOKING_CONFIRMED,
+				title: 'Booking confirmed',
+				body: 'is confirmed. See you then!',
+			},
+			[BookingStatus.REJECTED]: {
+				type: NotificationType.BOOKING_REJECTED,
+				title: 'Booking declined',
+				body: 'was declined by the agent.',
+			},
+			[BookingStatus.COMPLETED]: {
+				type: NotificationType.REVIEW_REQUESTED,
+				title: 'How did it go?',
+				body: 'is complete. Leave a review to help other pet owners.',
+			},
+		};
+
+		const entry = copy[booking.bookingStatus];
+		if (!entry) return;
+
+		await this.notificationService.createNotification({
+			notificationType: entry.type,
+			notificationGroup: NotificationGroup.BOOKINGS,
+			notificationTitle: entry.title,
+			notificationContent: `${await this.serviceTitleOf(booking.serviceId)} — ${this.whenLabel(booking)} ${entry.body}`,
+			notificationRefId: booking._id,
+			authorId: agentId,
+			receiverId: booking.userId,
+		});
+	}
+
+	private whenLabel(booking: BookedInfo): string {
+		return [booking.bookingDate, booking.bookingTime].filter(Boolean).join(' at ');
+	}
+
+	/**
+	 * Best effort: the title is only used for notification copy, and getService
+	 * throws for services that have since been removed. Never let that break the
+	 * booking update that triggered it.
+	 */
+	private async serviceTitleOf(serviceId: Types.ObjectId): Promise<string> {
+		try {
+			const service = await this.serviceService.getService(null, shapeIntoMongoObjectId(serviceId));
+			return service?.serviceTitle ?? 'Your booking';
+		} catch {
+			return 'Your booking';
+		}
+	}
 
 	private async checkTimeSlotAvailability(
 		agentId: Types.ObjectId,

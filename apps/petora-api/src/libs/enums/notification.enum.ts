@@ -3,7 +3,10 @@ import { registerEnumType } from '@nestjs/graphql';
 export enum NotificationType {
 	BOOKING_CREATED = 'BOOKING_CREATED',
 	BOOKING_CONFIRMED = 'BOOKING_CONFIRMED',
+	/** Cancelled by the customer — the agent is the receiver. */
 	BOOKING_CANCELLED = 'BOOKING_CANCELLED',
+	/** Declined by the agent — the customer is the receiver. */
+	BOOKING_REJECTED = 'BOOKING_REJECTED',
 
 	ORDER_CREATED = 'ORDER_CREATED',
 	ORDER_PAID = 'ORDER_PAID',

@@ -9,6 +9,9 @@ import { Member } from '../../libs/dto/member/member';
 import { OrderUpdateInput } from '../../libs/dto/order/order.update';
 import { MemberService } from '../member/member.service';
 import { ProductService } from '../product/product.service';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationGroup, NotificationType } from '../../libs/enums/notification.enum';
+import { OrderStatus } from '../../libs/enums/order.enum';
 
 @Injectable()
 export class OrderService {
@@ -18,6 +21,7 @@ export class OrderService {
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
 		private readonly memberService: MemberService,
 		private readonly productService: ProductService,
+		private readonly notificationService: NotificationService,
 	) {}
 
 	public async createOrder(memberId: Types.ObjectId, input: OrderItemInput[]): Promise<Order> {
@@ -50,6 +54,15 @@ export class OrderService {
 			await this.recordOrderItem(orderId, input);
 
 			await this.memberService.updateMemberPoint(memberId, 1);
+
+			await this.notificationService.createNotification({
+				notificationType: NotificationType.ORDER_CREATED,
+				notificationGroup: NotificationGroup.ORDERS,
+				notificationTitle: 'Order confirmed',
+				notificationContent: `Order ${newOrder.orderNumber} for ${this.formatWon(newOrder.orderTotal)} has been placed.`,
+				notificationRefId: newOrder._id,
+				receiverId: memberId,
+			});
 
 			return newOrder;
 		} catch (err) {
@@ -216,6 +229,55 @@ export class OrderService {
 			.exec();
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 
+		await this.notifyBuyerOfOrderStatus(result);
+
 		return result;
+	}
+
+	/** HELPERS **/
+
+	/**
+	 * PENDING is the state the order is created in, so only later transitions
+	 * are worth a notification.
+	 */
+	private async notifyBuyerOfOrderStatus(order: Order): Promise<void> {
+		const copy: Partial<Record<OrderStatus, { type: NotificationType; title: string; body: string }>> = {
+			[OrderStatus.PROCESSING]: {
+				type: NotificationType.ORDER_PAID,
+				title: 'Order is being prepared',
+				body: 'is being packed and will ship soon.',
+			},
+			[OrderStatus.SHIPPED]: {
+				type: NotificationType.ORDER_SHIPPED,
+				title: 'Order shipped',
+				body: 'is on its way.',
+			},
+			[OrderStatus.DELIVERED]: {
+				type: NotificationType.ORDER_DELIVERED,
+				title: 'Order delivered',
+				body: 'has been delivered. Leave a review to help other pet owners.',
+			},
+			[OrderStatus.CANCELLED]: {
+				type: NotificationType.ORDER_CANCELLED,
+				title: 'Order cancelled',
+				body: 'has been cancelled.',
+			},
+		};
+
+		const entry = copy[order.orderStatus];
+		if (!entry) return;
+
+		await this.notificationService.createNotification({
+			notificationType: entry.type,
+			notificationGroup: NotificationGroup.ORDERS,
+			notificationTitle: entry.title,
+			notificationContent: `Order ${order.orderNumber} ${entry.body}`,
+			notificationRefId: order._id,
+			receiverId: order.memberId,
+		});
+	}
+
+	private formatWon(value: number): string {
+		return `₩${(value ?? 0).toLocaleString()}`;
 	}
 }
