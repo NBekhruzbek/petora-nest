@@ -37,4 +37,10 @@ export class OrdersInquiry {
 	@IsOptional()
 	@Field(() => OrderStatus, { nullable: true })
 	orderStatus?: OrderStatus;
+
+	/** Partial, case-insensitive match on `orderNumber` — the reference a
+	 *  customer quotes when they get in touch. */
+	@IsOptional()
+	@Field(() => String, { nullable: true })
+	text?: string;
 }

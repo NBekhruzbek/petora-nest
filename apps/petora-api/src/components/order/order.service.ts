@@ -12,6 +12,7 @@ import { ProductService } from '../product/product.service';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationGroup, NotificationType } from '../../libs/enums/notification.enum';
 import { OrderStatus } from '../../libs/enums/order.enum';
+import { T } from '../../libs/types/common';
 
 @Injectable()
 export class OrderService {
@@ -99,7 +100,7 @@ export class OrderService {
 
 	public async getMyOrders(memberId: Types.ObjectId, input: OrdersInquiry): Promise<Orders> {
 		const match: any = { memberId };
-		if (input.orderStatus) match.orderStatus = input.orderStatus;
+		this.shapeOrdersMatch(match, input);
 
 		const result = await this.orderModel
 			.aggregate([
@@ -151,7 +152,7 @@ export class OrderService {
 
 	public async getAllOrdersByAdmin(input: OrdersInquiry): Promise<Orders> {
 		const match: any = {};
-		if (input.orderStatus) match.orderStatus = input.orderStatus;
+		this.shapeOrdersMatch(match, input);
 
 		const result = await this.orderModel
 			.aggregate([
@@ -235,6 +236,24 @@ export class OrderService {
 	}
 
 	/** HELPERS **/
+
+	/**
+	 * The filters `getMyOrders` and `getAllOrdersByAdmin` share, so a new one
+	 * cannot land on only half of them.
+	 *
+	 * `text` is escaped before it reaches RegExp: order numbers contain hyphens
+	 * and an admin part-typing "ORD-(" would otherwise throw an unterminated
+	 * group and 500 the request.
+	 */
+	private shapeOrdersMatch(match: T, input: OrdersInquiry): void {
+		if (input.orderStatus) match.orderStatus = input.orderStatus;
+
+		const text = input.text?.trim();
+		if (text) {
+			const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			match.orderNumber = { $regex: new RegExp(escaped, 'i') };
+		}
+	}
 
 	/**
 	 * PROCESSED is the state an order is created in, so it is deliberately absent
