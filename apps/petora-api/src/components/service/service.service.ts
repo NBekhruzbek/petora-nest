@@ -89,6 +89,19 @@ export class ServiceService {
 		}
 	}
 
+	/**
+	 * Permanent delete, only for offers already retired. Guarding on DELETE keeps
+	 * this the same two-step as every other remove*ByAdmin, so an offer an agent
+	 * still depends on can never go in a single click.
+	 */
+	public async removeServiceByAdmin(serviceId: Types.ObjectId): Promise<Service> {
+		const search: T = { _id: serviceId, serviceStatus: ServiceStatus.DELETE };
+		const result = await this.serviceModel.findOneAndDelete(search).exec();
+		if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
+
+		return result;
+	}
+
 	public async getService(viewerId: Types.ObjectId, targetId: Types.ObjectId): Promise<Service> {
 		try {
 			const search: T = {

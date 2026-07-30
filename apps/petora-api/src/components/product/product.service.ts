@@ -71,6 +71,20 @@ export class ProductService {
 		}
 	}
 
+	/**
+	 * Permanent delete, only for products already taken off the shop. Guarding on
+	 * DELETE makes the two-step the same as every other remove*ByAdmin: an admin
+	 * has to retire the product first, so a live listing can never be dropped by
+	 * one mis-click.
+	 */
+	public async removeProductByAdmin(productId: Types.ObjectId): Promise<Product> {
+		const search: T = { _id: productId, productStatus: ProductStatus.DELETE };
+		const result = await this.productModel.findOneAndDelete(search).exec();
+		if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
+
+		return result;
+	}
+
 	public async getProduct(viewerId: Types.ObjectId, targetId: Types.ObjectId): Promise<Product> {
 		try {
 			const search: T = {
