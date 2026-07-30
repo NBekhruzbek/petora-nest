@@ -21,7 +21,7 @@ const OrderSchema = new Schema(
 		orderStatus: {
 			type: String,
 			enum: OrderStatus,
-			default: OrderStatus.PENDING,
+			default: OrderStatus.PROCESSED,
 		},
 
 		paymentMethod: {

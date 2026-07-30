@@ -237,25 +237,27 @@ export class OrderService {
 	/** HELPERS **/
 
 	/**
-	 * PENDING is the state the order is created in, so only later transitions
-	 * are worth a notification.
+	 * PROCESSED is the state an order is created in, so it is deliberately absent
+	 * here — only transitions the buyer has not already seen are worth a
+	 * notification. EN_ROUTE reuses ORDER_SHIPPED because the notification UI
+	 * treats both as the same shipping-progress event.
 	 */
 	private async notifyBuyerOfOrderStatus(order: Order): Promise<void> {
 		const copy: Partial<Record<OrderStatus, { type: NotificationType; title: string; body: string }>> = {
-			[OrderStatus.PROCESSING]: {
-				type: NotificationType.ORDER_PAID,
-				title: 'Order is being prepared',
-				body: 'is being packed and will ship soon.',
-			},
 			[OrderStatus.SHIPPED]: {
 				type: NotificationType.ORDER_SHIPPED,
 				title: 'Order shipped',
-				body: 'is on its way.',
+				body: 'has left the warehouse.',
 			},
-			[OrderStatus.DELIVERED]: {
+			[OrderStatus.EN_ROUTE]: {
+				type: NotificationType.ORDER_SHIPPED,
+				title: 'Order out for delivery',
+				body: 'is on its way to you.',
+			},
+			[OrderStatus.ARRIVED]: {
 				type: NotificationType.ORDER_DELIVERED,
-				title: 'Order delivered',
-				body: 'has been delivered. Leave a review to help other pet owners.',
+				title: 'Order arrived',
+				body: 'has arrived. Leave a review to help other pet owners.',
 			},
 			[OrderStatus.CANCELLED]: {
 				type: NotificationType.ORDER_CANCELLED,
