@@ -14,6 +14,7 @@ import { QnaModule } from './qna/qna.module';
 import { FaqModule } from './faq/faq.module';
 import { NoticeModule } from './notice/notice.module';
 import { NotificationModule } from './notification/notification.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
 	imports: [
@@ -32,6 +33,7 @@ import { NotificationModule } from './notification/notification.module';
 		FaqModule,
 		NoticeModule,
 		NotificationModule,
+		AdminModule,
 	],
 })
 export class ComponentsModule {}
