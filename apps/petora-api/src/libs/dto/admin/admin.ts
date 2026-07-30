@@ -23,7 +23,16 @@ export class AdminDashboardStats {
 	@Field(() => Int)
 	pendingOrders: number;
 
-	/** Sum of `orderTotal` over every order that was not cancelled. */
+	@Field(() => Int)
+	totalBookings: number;
+
+	@Field(() => Int)
+	pendingBookings: number;
+
+	/**
+	 * Both halves of the marketplace: every order that was not cancelled, plus
+	 * every booking the customer has actually paid for.
+	 */
 	@Field(() => Number)
 	totalRevenue: number;
 }

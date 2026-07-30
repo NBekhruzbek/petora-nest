@@ -5,6 +5,7 @@ import { AdminService } from './admin.service';
 import MemberSchema from '../../schemas/Member.model';
 import ProductSchema from '../../schemas/Product.model';
 import OrderSchema from '../../schemas/Order.model';
+import BookingSchema from '../../schemas/Booking.model';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
@@ -21,6 +22,10 @@ import { AuthModule } from '../auth/auth.module';
 			{
 				name: 'Order',
 				schema: OrderSchema,
+			},
+			{
+				name: 'Booking',
+				schema: BookingSchema,
 			},
 		]),
 		AuthModule,

@@ -2,6 +2,7 @@ import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { Types } from 'mongoose';
 import { BookingPaymentStatus, BookingPetType, BookingStatus } from '../../enums/booking.enum';
 import { Service } from '../service/service';
+import { Member } from '../member/member';
 
 @ObjectType()
 export class BookedInfo {
@@ -52,6 +53,13 @@ export class BookedInfo {
 
 	@Field(() => String)
 	agentId: Types.ObjectId;
+
+	/** from aggregation — only getAllBookingsByAdmin joins the two members. */
+	@Field(() => Member, { nullable: true })
+	userData?: Member;
+
+	@Field(() => Member, { nullable: true })
+	agentData?: Member;
 
 	@Field(() => Date)
 	createdAt: Date;

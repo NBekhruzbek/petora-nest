@@ -69,4 +69,22 @@ export class BookingResolver {
 		console.log('Query: getAgentBookings');
 		return await this.bookingService.getAgentBookings(agentId, input);
 	}
+
+	/** ADMIN */
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Query(() => Bookings)
+	public async getAllBookingsByAdmin(@Args('input') input: BookingsInquiry): Promise<Bookings> {
+		console.log('Query: getAllBookingsByAdmin');
+		return await this.bookingService.getAllBookingsByAdmin(input);
+	}
+
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation(() => BookedInfo)
+	public async updateBookingByAdmin(@Args('input') input: BookingUpdateInput): Promise<BookedInfo> {
+		console.log('Mutation: updateBookingByAdmin');
+		return await this.bookingService.updateBookingByAdmin(input);
+	}
 }

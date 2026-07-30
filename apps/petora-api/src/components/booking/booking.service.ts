@@ -200,6 +200,127 @@ export class BookingService {
 		return result[0];
 	}
 
+	/**
+	 * Unlike getMyBookings and getAgentBookings this is scoped to nobody, so the
+	 * panel can answer "what is happening on this booking" from either side. It
+	 * is also the only booking query that joins the two members — support needs
+	 * to see who booked and who is fulfilling without a second round trip.
+	 */
+	public async getAllBookingsByAdmin(input: BookingsInquiry): Promise<Bookings> {
+		const match: T = {};
+		if (input.bookingStatus) match.bookingStatus = input.bookingStatus;
+		// Escaped: booking numbers contain hyphens, and a half-typed "BKG-(" is
+		// an unterminated group rather than a search.
+		if (input.text) {
+			const escaped = input.text.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			match.bookingNumber = { $regex: new RegExp(escaped, 'i') };
+		}
+
+		const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
+
+		const result = await this.bookingModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: sort },
+				{
+					$facet: {
+						list: [
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+							{
+								$lookup: {
+									from: 'services',
+									localField: 'serviceId',
+									foreignField: '_id',
+									as: 'serviceData',
+								},
+							},
+							{ $unwind: { path: '$serviceData', preserveNullAndEmptyArrays: true } },
+							{
+								$lookup: {
+									from: 'members',
+									localField: 'userId',
+									foreignField: '_id',
+									as: 'userData',
+								},
+							},
+							{ $unwind: { path: '$userData', preserveNullAndEmptyArrays: true } },
+							{
+								$lookup: {
+									from: 'members',
+									localField: 'agentId',
+									foreignField: '_id',
+									as: 'agentData',
+								},
+							},
+							{ $unwind: { path: '$agentData', preserveNullAndEmptyArrays: true } },
+							{
+								$project: {
+									'userData.memberPassword': 0,
+									'userData.accessToken': 0,
+									'agentData.memberPassword': 0,
+									'agentData.accessToken': 0,
+								},
+							},
+						],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
+
+		// If there is no data, return an empty list.
+		return result[0];
+	}
+
+	/**
+	 * The admin override. Unlike the agent it may also cancel, because support
+	 * acts for whichever side asked — but the side effects still have to match
+	 * the customer and agent paths, so the service booking counter is decremented
+	 * once on the way into CANCELLED or REJECTED and never for a booking that was
+	 * already in one of them.
+	 */
+	public async updateBookingByAdmin(input: BookingUpdateInput): Promise<BookedInfo> {
+		const { bookingId, ...updateData } = input;
+
+		const before: BookedInfo = await this.bookingModel.findById(bookingId).lean().exec();
+		if (!before) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		const result = await this.bookingModel
+			.findOneAndUpdate({ _id: bookingId }, { $set: updateData }, { new: true })
+			.exec();
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		const closed: BookingStatus[] = [BookingStatus.CANCELLED, BookingStatus.REJECTED];
+		if (!closed.includes(before.bookingStatus) && closed.includes(result.bookingStatus)) {
+			await this.serviceService.updateServiceBookingTimes(result.serviceId, -1);
+		}
+
+		// Nothing moved, so there is nothing anyone needs telling about.
+		if (before.bookingStatus === result.bookingStatus) return result;
+
+		if (result.bookingStatus === BookingStatus.CANCELLED) {
+			// Neither party did this, so both of them hear about it.
+			for (const receiverId of [result.userId, result.agentId]) {
+				await this.notificationService.createNotification({
+					notificationType: NotificationType.BOOKING_CANCELLED,
+					notificationGroup: NotificationGroup.BOOKINGS,
+					notificationTitle: 'Booking cancelled',
+					notificationContent: `${await this.serviceTitleOf(result.serviceId)} — ${this.whenLabel(
+						result,
+					)} was cancelled by Petora support.`,
+					notificationRefId: result._id,
+					receiverId: receiverId,
+				});
+			}
+			return result;
+		}
+
+		await this.notifyCustomerOfAgentDecision(result.agentId, result);
+
+		return result;
+	}
+
 	/** HELPERS **/
 
 	/**
