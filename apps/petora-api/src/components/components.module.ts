@@ -15,6 +15,7 @@ import { FaqModule } from './faq/faq.module';
 import { NoticeModule } from './notice/notice.module';
 import { NotificationModule } from './notification/notification.module';
 import { AdminModule } from './admin/admin.module';
+import { DiscoveryPetModule } from './discovery-pet/discovery-pet.module';
 
 @Module({
 	imports: [
@@ -34,6 +35,7 @@ import { AdminModule } from './admin/admin.module';
 		NoticeModule,
 		NotificationModule,
 		AdminModule,
+		DiscoveryPetModule,
 	],
 })
 export class ComponentsModule {}

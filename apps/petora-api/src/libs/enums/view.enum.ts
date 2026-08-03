@@ -8,5 +8,6 @@ export enum ViewGroup {
 	QNA = 'QNA',
 	FAQ = 'FAQ',
 	NOTICE = 'NOTICE',
+	PET = 'PET',
 }
 registerEnumType(ViewGroup, { name: 'ViewGroup' });

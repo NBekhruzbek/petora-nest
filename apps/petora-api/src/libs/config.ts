@@ -30,6 +30,8 @@ export const availableServiceSorts = [
 
 export const availableBookingSorts = ['createdAt', 'updatedAt'];
 
+export const availableDiscoveryPetSorts = ['createdAt', 'petLikes', 'petViews', 'petRank'];
+
 export const availableBoardArticleSorts = ['createdAt', 'updatedAt', 'articleLikes', 'articleViews'];
 
 export const availableQnaSorts = ['createdAt', 'updatedAt', 'questionAnswers', 'questionViews', 'questionLikes'];

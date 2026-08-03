@@ -7,5 +7,6 @@ export enum LikeGroup {
 	ARTICLE = 'ARTICLE',
 	QNA = 'QNA',
 	COMMENT = 'COMMENT',
+	PET = 'PET',
 }
 registerEnumType(LikeGroup, { name: 'LikeGroup' });
