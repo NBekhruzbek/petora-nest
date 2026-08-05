@@ -16,6 +16,7 @@ export enum Message {
 	WRONG_PASSWORD = 'Wrong password, please try again!',
 	NOT_AUTHENTICATED = 'You are not authenticated, Please login first!',
 	TOKEN_NOT_EXIST = 'Bearer Token is not provided!',
+	INVALID_GOOGLE_TOKEN = 'Invalid or expired Google token!',
 	ONLY_SPECIFIC_ROLES_ALLOWED = 'Allowed only for members with specific roles!',
 	NOT_ALLOWED_REQUEST = 'Not Allowed Request!',
 	PROVIDE_ALLOWED_FORMAT = 'Please provide jpg, jpeg or png images!',

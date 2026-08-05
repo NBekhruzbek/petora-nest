@@ -32,6 +32,12 @@ export class MemberResolver {
 		return await this.memberService.login(input);
 	}
 
+	@Mutation(() => Member)
+	public async loginAndSignupWithGoogle(@Args('idToken') idToken: string): Promise<Member> {
+		console.log('Mutation: loginAndSignupWithGoogle');
+		return await this.memberService.loginAndSignupWithGoogle(idToken);
+	}
+
 	// Authentication => Who are you?
 	// Authorization => Are you allowed to do that?
 

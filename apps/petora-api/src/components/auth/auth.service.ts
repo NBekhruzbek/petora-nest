@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { Member } from '../../libs/dto/member/member';
 import { T } from '../../libs/types/common';
 import { JwtService } from '@nestjs/jwt';
 import { shapeIntoMongoObjectId } from '../../libs/config';
+import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import { Message } from '../../libs/enums/common.enum';
 
 @Injectable()
 export class AuthService {
+	private readonly googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 	constructor(private jwtService: JwtService) {}
 
 	public async hashPassword(memberPassord: string): Promise<string> {
@@ -34,5 +38,24 @@ export class AuthService {
 		const member = await this.jwtService.verifyAsync(token);
 		member._id = shapeIntoMongoObjectId(member._id);
 		return member;
+	}
+
+	public async verifyGoogleToken(idToken: string): Promise<TokenPayload> {
+		let ticket;
+		try {
+			ticket = await this.googleClient.verifyIdToken({
+				idToken,
+				audience: process.env.GOOGLE_CLIENT_ID,
+			});
+		} catch (err) {
+			throw new UnauthorizedException(Message.INVALID_GOOGLE_TOKEN);
+		}
+
+		const payload = ticket.getPayload();
+		if (!payload || !payload.email || !payload.email_verified) {
+			throw new UnauthorizedException(Message.INVALID_GOOGLE_TOKEN);
+		}
+
+		return payload;
 	}
 }

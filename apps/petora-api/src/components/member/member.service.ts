@@ -3,7 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Member, MemberBillingInfos, Members } from '../../libs/dto/member/member';
 import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
-import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
+import { MemberAuthType, MemberStatus, MemberType } from '../../libs/enums/member.enum';
+import { v4 as uuidv4 } from 'uuid';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { AuthService } from '../auth/auth.service';
 import { MemberBillingUpdate, MemberUpdate } from '../../libs/dto/member/member.update';
@@ -61,6 +62,50 @@ export class MemberService {
 		response.accessToken = await this.authService.createToken(response);
 
 		return response;
+	}
+
+	public async loginAndSignupWithGoogle(idToken: string): Promise<Member> {
+		const payload = await this.authService.verifyGoogleToken(idToken);
+		const { email, name, picture, sub } = payload;
+
+		let response: Member = await this.memberModel.findOne({ memberEmail: email }).exec();
+
+		if (response) {
+			if (response.memberStatus === MemberStatus.DELETE) {
+				throw new InternalServerErrorException(Message.NO_USER_NAME);
+			} else if (response.memberStatus === MemberStatus.BLOCK) {
+				throw new InternalServerErrorException(Message.BLOCKED_USER);
+			}
+		} else {
+			try {
+				response = await this.memberModel.create({
+					memberUserName: this.generateUserNameFromEmail(email),
+					memberEmail: email,
+					memberFullName: name,
+					memberImage: picture ?? '',
+					memberPhone: `google-${sub}`,
+					memberPassword: await this.authService.hashPassword(uuidv4()),
+					memberAuthType: MemberAuthType.GOOGLE,
+				});
+			} catch (err) {
+				console.log('ERROR, Service.model: ', err instanceof Error ? err.message : err);
+				throw new BadRequestException(Message.USED_MEMBER_NICK_OR_PHONE_OR_EMAIL);
+			}
+		}
+
+		response.accessToken = await this.authService.createToken(response);
+
+		return response;
+	}
+
+	private generateUserNameFromEmail(email: string): string {
+		const base =
+			email
+				.split('@')[0]
+				.replace(/[^a-zA-Z0-9]/g, '')
+				.slice(0, 10) || 'member';
+		const suffix = Math.floor(1000 + Math.random() * 9000);
+		return `${base}${suffix}`.toLowerCase();
 	}
 
 	public async checkUserName(memberUserName: string): Promise<boolean> {
