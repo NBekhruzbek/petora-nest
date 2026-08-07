@@ -5,6 +5,8 @@ import * as WebSocket from 'ws';
 import { AuthService } from '../components/auth/auth.service';
 import { Member } from '../libs/dto/member/member';
 import * as url from 'url';
+import { Types } from 'mongoose';
+import { Notification } from '../libs/dto/notification/notification';
 
 interface MessagePayload {
 	event: string;
@@ -110,6 +112,17 @@ export class SocketGateway implements OnGatewayInit {
 		this.server.clients.forEach((client) => {
 			if (client.readyState === WebSocket.OPEN) {
 				client.send(JSON.stringify(message));
+			}
+		});
+	}
+
+	public sendNotification(receiverId: Types.ObjectId, notification: Notification) {
+		const payload = JSON.stringify({ event: 'notification', notification });
+		this.clientsAuthMap.forEach((member, client) => {
+			// Bir member bir nechta tabda ochiq bo'lishi mumkin — hammasiga yuboriladi.
+			// Guest ulanishlarda member null, hech narsaga mos kelmaydi.
+			if (member && String(member._id) === String(receiverId) && client.readyState === WebSocket.OPEN) {
+				client.send(payload);
 			}
 		});
 	}

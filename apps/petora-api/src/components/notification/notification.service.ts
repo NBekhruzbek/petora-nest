@@ -8,10 +8,15 @@ import { NotificationStatus } from '../../libs/enums/notification.enum';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { T } from '../../libs/types/common';
+import { SocketModule } from '../../socket/socket.module';
+import { SocketGateway } from '../../socket/socket.gateway';
 
 @Injectable()
 export class NotificationService {
-	constructor(@InjectModel('Notification') private readonly notificationModel: Model<Notification>) {}
+	constructor(
+		@InjectModel('Notification') private readonly notificationModel: Model<Notification>,
+		private readonly socketGateway: SocketGateway,
+	) {}
 
 	/** EMISSION **/
 
@@ -28,7 +33,8 @@ export class NotificationService {
 		if (input.authorId && String(input.authorId) === String(input.receiverId)) return false;
 
 		try {
-			await this.notificationModel.create(input);
+			const created = await this.notificationModel.create(input);
+			this.socketGateway.sendNotification(input.receiverId, created);
 			return true;
 		} catch (err) {
 			console.log('Error, Notification.model:', err instanceof Error ? err.message : err);
