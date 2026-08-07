@@ -86,8 +86,6 @@ export class BookingService {
 			receiverId: result.agentId,
 		});
 
-		//TODO: REFOUNDING SERVICE PRICE
-
 		return result;
 	}
 
@@ -111,8 +109,6 @@ export class BookingService {
 		}
 
 		await this.notifyCustomerOfAgentDecision(agentId, result);
-
-		//TODO: IF BOOKING STATUS is REJECTED => REFOUNDING SERVICE PAYING
 
 		return result;
 	}

@@ -11,6 +11,8 @@ import { OrderUpdateInput } from '../../libs/dto/order/order.update';
 import { MemberService } from '../member/member.service';
 import { ProductService } from '../product/product.service';
 import { NotificationService } from '../notification/notification.service';
+import { MailService } from '../mail/mail.service';
+import { InvoiceLine } from '../mail/mail.templates';
 import { PortonePayment, PortoneService } from '../payment/portone.service';
 import { NotificationGroup, NotificationType } from '../../libs/enums/notification.enum';
 import { OrderStatus } from '../../libs/enums/order.enum';
@@ -30,6 +32,7 @@ export class OrderService {
 		private readonly memberService: MemberService,
 		private readonly productService: ProductService,
 		private readonly notificationService: NotificationService,
+		private readonly mailService: MailService,
 		private readonly portoneService: PortoneService,
 	) {}
 
@@ -45,7 +48,7 @@ export class OrderService {
 		if (!member.memberAddress || !member.memberPhone)
 			throw new InternalServerErrorException(Message.NOT_USER_ADDRESS_OR_PHONE);
 
-		const { amount, items } = await this.priceOrderItems(input);
+		const { amount, items, lines } = await this.priceOrderItems(input);
 		const delivery = amount < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
 		const orderTotal = amount + delivery;
 
@@ -82,6 +85,10 @@ export class OrderService {
 				receiverId: memberId,
 			});
 
+			if (member.memberEmail) {
+				void this.mailService.sendOrderInvoice(member.memberEmail, newOrder, lines);
+			}
+
 			return newOrder;
 		} catch (err) {
 			console.log('Error, order.model', err instanceof Error ? err.message : err);
@@ -90,7 +97,9 @@ export class OrderService {
 		}
 	}
 
-	private async priceOrderItems(input: OrderItemInput[]): Promise<{ amount: number; items: OrderItemInput[] }> {
+	private async priceOrderItems(
+		input: OrderItemInput[],
+	): Promise<{ amount: number; items: OrderItemInput[]; lines: InvoiceLine[] }> {
 		const requested = input.map((item) => ({
 			...item,
 			productId: shapeIntoMongoObjectId(item.productId),
@@ -104,19 +113,22 @@ export class OrderService {
 			.find({ _id: { $in: requested.map((item) => item.productId) }, productStatus: ProductStatus.ACTIVE })
 			.exec();
 
-		const priceById = new Map(products.map((product) => [product._id.toString(), this.sellingPrice(product)]));
+		const productById = new Map(products.map((product) => [product._id.toString(), product]));
 
 		let amount = 0;
+		const lines: InvoiceLine[] = [];
 		const items = requested.map((item) => {
-			const itemPrice = priceById.get(item.productId.toString());
+			const product = productById.get(item.productId.toString());
 
-			if (itemPrice === undefined) throw new BadRequestException(Message.NO_DATA_FOUND);
+			if (!product) throw new BadRequestException(Message.NO_DATA_FOUND);
 
+			const itemPrice = this.sellingPrice(product);
 			amount += itemPrice * item.itemQuantity;
+			lines.push({ name: product.productName, quantity: item.itemQuantity, price: itemPrice });
 			return { ...item, itemPrice };
 		});
 
-		return { amount, items };
+		return { amount, items, lines };
 	}
 
 	/** What the shop actually charges — the discounted price when one applies. */
