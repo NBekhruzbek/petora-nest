@@ -28,7 +28,7 @@ export class MailService {
 			await this.getTransporter().sendMail({
 				from: process.env.MAIL_FROM,
 				to: to,
-				subject: `Petora — Invoice for order ${order.orderNumber}`,
+				subject: `Petora — 거래명세서 / Invoice (${order.orderNumber})`,
 				html: orderInvoiceHtml(order, lines),
 			});
 		} catch (err) {
