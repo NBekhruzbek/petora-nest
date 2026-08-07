@@ -5,10 +5,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import OrderSchema from '../../schemas/Order.model';
 import OrderItemSchema from '../../schemas/OrderItem.model';
 import MemberSchema from '../../schemas/Member.model';
+import ProductSchema from '../../schemas/Product.model';
 import { AuthModule } from '../auth/auth.module';
 import { MemberModule } from '../member/member.module';
 import { ProductModule } from '../product/product.module';
 import { NotificationModule } from '../notification/notification.module';
+import { PaymentModule } from '../payment/payment.module';
 
 @Module({
 	imports: [
@@ -25,11 +27,16 @@ import { NotificationModule } from '../notification/notification.module';
 				name: 'Member',
 				schema: MemberSchema,
 			},
+			{
+				name: 'Product',
+				schema: ProductSchema,
+			},
 		]),
 		AuthModule,
 		MemberModule,
 		ProductModule,
 		NotificationModule,
+		PaymentModule,
 	],
 	providers: [OrderResolver, OrderService],
 })

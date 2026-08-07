@@ -17,6 +17,10 @@ registerEnumType(OrderStatus, { name: 'OrderStatus' });
 
 export enum PaymentMethod {
 	CARD = 'CARD',
+	EASY_PAY = 'EASY_PAY',
+	TRANSFER = 'TRANSFER',
+	VIRTUAL_ACCOUNT = 'VIRTUAL_ACCOUNT',
+	MOBILE = 'MOBILE',
 	CASH_TO_DELIVERY = 'CASH_TO_DELIVERY',
 }
 registerEnumType(PaymentMethod, { name: 'PaymentMethod' });

@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { OrderItemInput, OrdersInquiry } from '../../libs/dto/order/order.input';
@@ -6,13 +6,19 @@ import { Order, Orders } from '../../libs/dto/order/order';
 import { Message } from '../../libs/enums/common.enum';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { Member } from '../../libs/dto/member/member';
+import { Product } from '../../libs/dto/product/product';
 import { OrderUpdateInput } from '../../libs/dto/order/order.update';
 import { MemberService } from '../member/member.service';
 import { ProductService } from '../product/product.service';
 import { NotificationService } from '../notification/notification.service';
+import { PortonePayment, PortoneService } from '../payment/portone.service';
 import { NotificationGroup, NotificationType } from '../../libs/enums/notification.enum';
 import { OrderStatus } from '../../libs/enums/order.enum';
+import { ProductStatus } from '../../libs/enums/product.enum';
 import { T } from '../../libs/types/common';
+
+const DELIVERY_FEE = 4000;
+const FREE_DELIVERY_THRESHOLD = 50000;
 
 @Injectable()
 export class OrderService {
@@ -20,19 +26,18 @@ export class OrderService {
 		@InjectModel('Order') private readonly orderModel: Model<Order>,
 		@InjectModel('OrderItem') private readonly orderItemModel: Model<OrderItemInput>,
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
+		@InjectModel('Product') private readonly productModel: Model<Product>,
 		private readonly memberService: MemberService,
 		private readonly productService: ProductService,
 		private readonly notificationService: NotificationService,
+		private readonly portoneService: PortoneService,
 	) {}
 
-	public async createOrder(memberId: Types.ObjectId, input: OrderItemInput[]): Promise<Order> {
-		const amount = input.reduce((accumlator: number, item: OrderItemInput) => {
-			return accumlator + item.itemPrice * item.itemQuantity;
-		}, 0);
+	public async createOrder(memberId: Types.ObjectId, input: OrderItemInput[], paymentId: string): Promise<Order> {
+		if (!input?.length) throw new BadRequestException(Message.BAD_REQUEST);
 
-		const delivery = amount < 100000 ? 5000 : 0;
-		const orderNumber = await this.createOrderNumber();
-		console.log('ORDER_NUMBER: ', orderNumber);
+		const alreadyPlaced = await this.orderModel.findOne({ paymentId }).exec();
+		if (alreadyPlaced) return alreadyPlaced;
 
 		const member: Member = await this.memberModel.findById(memberId);
 		if (!member) throw new InternalServerErrorException(Message.CREATE_FAILED);
@@ -40,11 +45,23 @@ export class OrderService {
 		if (!member.memberAddress || !member.memberPhone)
 			throw new InternalServerErrorException(Message.NOT_USER_ADDRESS_OR_PHONE);
 
+		const { amount, items } = await this.priceOrderItems(input);
+		const delivery = amount < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
+		const orderTotal = amount + delivery;
+
+		const payment = await this.portoneService.verifyPaid(paymentId, orderTotal);
+		this.assertPaymentRaisedBy(payment, memberId);
+
+		const orderNumber = await this.createOrderNumber();
+		console.log('ORDER_NUMBER: ', orderNumber);
+
 		try {
 			const newOrder: Order = await this.orderModel.create({
 				orderNumber: orderNumber,
-				orderTotal: amount + delivery,
+				orderTotal: orderTotal,
 				orderDelivery: delivery,
+				paymentId: paymentId,
+				paymentMethod: this.portoneService.toPaymentMethod(payment),
 				deliveryAddress: member.memberAddress,
 				receiverName: member.memberFullName ? member.memberFullName : member.memberUserName,
 				receiverPhone: member.memberPhone,
@@ -52,7 +69,7 @@ export class OrderService {
 			});
 
 			const orderId = newOrder._id;
-			await this.recordOrderItem(orderId, input);
+			await this.recordOrderItem(orderId, items);
 
 			await this.memberService.updateMemberPoint(memberId, 1);
 
@@ -68,8 +85,56 @@ export class OrderService {
 			return newOrder;
 		} catch (err) {
 			console.log('Error, order.model', err instanceof Error ? err.message : err);
+			await this.portoneService.cancelPayment(paymentId, 'Order could not be recorded');
 			throw new InternalServerErrorException(Message.CREATE_FAILED);
 		}
+	}
+
+	private async priceOrderItems(input: OrderItemInput[]): Promise<{ amount: number; items: OrderItemInput[] }> {
+		const requested = input.map((item) => ({
+			...item,
+			productId: shapeIntoMongoObjectId(item.productId),
+			itemQuantity: Math.trunc(item.itemQuantity),
+		}));
+
+		if (requested.some((item) => !Number.isFinite(item.itemQuantity) || item.itemQuantity < 1))
+			throw new BadRequestException(Message.BAD_REQUEST);
+
+		const products: Product[] = await this.productModel
+			.find({ _id: { $in: requested.map((item) => item.productId) }, productStatus: ProductStatus.ACTIVE })
+			.exec();
+
+		const priceById = new Map(products.map((product) => [product._id.toString(), this.sellingPrice(product)]));
+
+		let amount = 0;
+		const items = requested.map((item) => {
+			const itemPrice = priceById.get(item.productId.toString());
+
+			if (itemPrice === undefined) throw new BadRequestException(Message.NO_DATA_FOUND);
+
+			amount += itemPrice * item.itemQuantity;
+			return { ...item, itemPrice };
+		});
+
+		return { amount, items };
+	}
+
+	/** What the shop actually charges — the discounted price when one applies. */
+	private sellingPrice(product: Product): number {
+		return product.productDiscount > 0 && product.productPriceAfterDiscount != null
+			? product.productPriceAfterDiscount
+			: product.productPrice;
+	}
+
+	private assertPaymentRaisedBy(payment: PortonePayment, memberId: Types.ObjectId): void {
+		let paidBy: string | undefined;
+		try {
+			paidBy = payment.customData ? JSON.parse(payment.customData)?.memberId : undefined;
+		} catch {
+			paidBy = undefined;
+		}
+
+		if (paidBy !== memberId.toString()) throw new BadRequestException(Message.NOT_ALLOWED_REQUEST);
 	}
 
 	private async createOrderNumber(): Promise<string> {

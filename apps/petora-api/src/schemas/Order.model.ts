@@ -30,6 +30,11 @@ const OrderSchema = new Schema(
 			default: PaymentMethod.CARD,
 		},
 
+		paymentId: {
+			type: String,
+			index: { unique: true, sparse: true },
+		},
+
 		deliveryAddress: {
 			type: String,
 			required: true,

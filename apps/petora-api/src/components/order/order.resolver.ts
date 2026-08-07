@@ -19,11 +19,12 @@ export class OrderResolver {
 	@Mutation(() => Order)
 	public async createOrder(
 		@Args('input', { type: () => [OrderItemInput] }) input: OrderItemInput[],
+		@Args('paymentId') paymentId: string,
 		@AuthMember('_id') _id: string,
 	): Promise<Order> {
 		console.log('Mutation: createOrder');
 		const memberId = shapeIntoMongoObjectId(_id);
-		return this.orderService.createOrder(memberId, input);
+		return this.orderService.createOrder(memberId, input, paymentId);
 	}
 
 	@UseGuards(AuthGuard)

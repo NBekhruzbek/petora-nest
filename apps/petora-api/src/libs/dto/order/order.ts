@@ -51,6 +51,9 @@ export class Order {
 	@Field(() => PaymentMethod)
 	paymentMethod: PaymentMethod;
 
+	@Field(() => String, { nullable: true })
+	paymentId?: string;
+
 	@Field(() => String)
 	deliveryAddress: string;
 
