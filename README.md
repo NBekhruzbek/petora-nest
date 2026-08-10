@@ -34,20 +34,20 @@ This repository is the **backend**: a NestJS monorepo that serves a GraphQL API,
 
 ## 2. Tech Stack
 
-| Layer             | Technology                                                                        | Purpose                                                      |
-| ----------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Framework         | **NestJS 10** (monorepo mode)                                                     | Modular server architecture, dependency injection            |
-| Language          | **TypeScript 5**                                                                  | Type safety across the entire codebase                       |
-| API               | **GraphQL** — Apollo Server 4, code-first (`autoSchemaFile`)                      | Single typed endpoint for all client data needs              |
-| Database          | **MongoDB** with **Mongoose 8**                                                   | Document storage for 18 domain schemas                       |
-| Real-time         | **WebSocket** (`ws` + `@nestjs/platform-ws`)                                      | Live chat + targeted push notifications                      |
-| Auth              | **JWT** (`@nestjs/jwt`) + **bcrypt** + **Google Sign-In** (`google-auth-library`) | Stateless auth, hashed passwords, social login               |
-| Payments          | **PortOne V2 REST API**                                                           | Server-side payment verification & auto-refund               |
-| Email             | **Nodemailer** (SMTP)                                                             | Bilingual (KR/EN) HTML invoice emails                        |
-| Scheduling        | **@nestjs/schedule** (cron)                                                       | Nightly ranking batch jobs                                   |
-| File upload       | **graphql-upload**                                                                | Image uploads (max 15 MB × 10 files), served from `/uploads` |
-| Validation        | **class-validator** + global `ValidationPipe`                                     | Every GraphQL input is validated before it reaches a service |
-| Testing / Quality | **Jest**, **ESLint**, **Prettier**                                                | Unit & e2e tests, consistent code style                      |
+| Layer             | Technology                                                                        | Purpose                                                        |
+| ----------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Framework         | **NestJS 10** (monorepo mode)                                                     | Modular server architecture, dependency injection              |
+| Language          | **TypeScript 5**                                                                  | Type safety across the entire codebase                         |
+| API               | **GraphQL** — Apollo Server 4, code-first (`autoSchemaFile`)                      | Single typed endpoint for all client data needs                |
+| Database          | **MongoDB** with **Mongoose 8**                                                   | Document storage for 19 domain schemas                         |
+| Real-time         | **WebSocket** (`ws` + `@nestjs/platform-ws`)                                      | Live chat + targeted push notifications                        |
+| Auth              | **JWT** (`@nestjs/jwt`) + **bcrypt** + **Google Sign-In** (`google-auth-library`) | Stateless auth, hashed passwords, social login, password reset |
+| Payments          | **PortOne V2 REST API**                                                           | Server-side payment verification & auto-refund                 |
+| Email             | **Nodemailer** (SMTP)                                                             | Bilingual (KR/EN) HTML invoice & password-reset emails         |
+| Scheduling        | **@nestjs/schedule** (cron)                                                       | Nightly ranking batch jobs                                     |
+| File upload       | **graphql-upload**                                                                | Image uploads (max 15 MB × 10 files), served from `/uploads`   |
+| Validation        | **class-validator** + global `ValidationPipe`                                     | Every GraphQL input is validated before it reaches a service   |
+| Testing / Quality | **Jest**, **ESLint**, **Prettier**                                                | Unit & e2e tests, consistent code style                        |
 
 ## 3. Architecture
 
@@ -77,7 +77,7 @@ flowchart LR
     DB[("MongoDB")]
     PORTONE["PortOne V2 API<br/>(payment verification)"]
     GOOGLE["Google OAuth<br/>(ID-token verification)"]
-    SMTP["SMTP<br/>(invoice emails)"]
+    SMTP["SMTP<br/>(invoice & reset-code emails)"]
 
     FE -->|queries & mutations| GQL
     FE <-->|ws: chat, notifications| WS
@@ -86,7 +86,7 @@ flowchart LR
     CRON --> DB
     GQL -->|verify / cancel payment| PORTONE
     GQL -->|verify Google ID token| GOOGLE
-    GQL -->|send invoice| SMTP
+    GQL -->|send invoice / reset code| SMTP
 ```
 
 **Request pipeline (petora-api):** every request passes through CORS → `graphql-upload` middleware → global `ValidationPipe` → global `LoggingInterceptor` (logs every operation and its response time) → guards (`AuthGuard` / `RolesGuard` / `WithoutGuard`) → resolver → service → Mongoose model. GraphQL errors are normalized by a global `formatError` hook so the client always receives a clean `{ code, message }` shape.
@@ -95,25 +95,25 @@ flowchart LR
 
 `petora-api` is organized into 19 feature modules under [apps/petora-api/src/components/](apps/petora-api/src/components/), each following the same **Resolver → Service → Schema** pattern:
 
-| Module               | Responsibility                                                                                                                          |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **member**           | Signup / login, Google login, profiles, agent listing, member stats (followers, likes, views, points), image upload                     |
-| **auth**             | JWT issue & verify, bcrypt password hashing, Google ID-token verification, guards & decorators (`@AuthMember`, `@Roles`)                |
-| **product**          | Pet product catalog — CRUD, filtered/sorted/paginated search by type, pet type, price range                                             |
-| **order**            | Checkout: server-side pricing, PortOne payment verification, order + order-item recording, delivery tracking statuses                   |
-| **payment**          | PortOne V2 REST client — `verifyPaid`, `cancelPayment` (auto-refund), payment-method mapping                                            |
-| **booking**          | Service reservations with status lifecycle `PENDING → CONFIRMED → COMPLETED / CANCELLED / REJECTED`, managed by both customer and agent |
-| **service**          | Pet-care service catalog (day care, walking, grooming, boarding, training, veterinary) across 10 Korean cities                          |
-| **discovery-pet**    | Pet adoption listings (dog, cat, rabbit, bird, hamster)                                                                                 |
-| **board-article**    | Community articles with categories, likes, views                                                                                        |
-| **comment**          | Comments on articles, products, services and other targets                                                                              |
-| **like** / **view**  | Polymorphic like & view tracking across 7–8 target types (agents, services, products, articles, Q&A, pets…)                             |
-| **review**           | Ratings & reviews for products / services                                                                                               |
-| **qna**              | Member questions with admin answers                                                                                                     |
-| **faq** / **notice** | Help-center content managed by admins                                                                                                   |
-| **notification**     | Persistent notification inbox (orders, bookings, system) + unread counters, delivered live over WebSocket                               |
-| **mail**             | Nodemailer SMTP transport + bilingual HTML invoice template                                                                             |
-| **admin**            | Admin dashboard stats + moderation over all entities (members, products, bookings, articles, Q&A…)                                      |
+| Module               | Responsibility                                                                                                                                      |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **member**           | Signup / login, Google login, password reset by emailed code, profiles, agent listing, member stats (followers, likes, views, points), image upload |
+| **auth**             | JWT issue & verify, bcrypt password hashing, Google ID-token verification, guards & decorators (`@AuthMember`, `@Roles`)                            |
+| **product**          | Pet product catalog — CRUD, filtered/sorted/paginated search by type, pet type, price range                                                         |
+| **order**            | Checkout: server-side pricing, PortOne payment verification, order + order-item recording, delivery tracking statuses                               |
+| **payment**          | PortOne V2 REST client — `verifyPaid`, `cancelPayment` (auto-refund), payment-method mapping                                                        |
+| **booking**          | Service reservations with status lifecycle `PENDING → CONFIRMED → COMPLETED / CANCELLED / REJECTED`, managed by both customer and agent             |
+| **service**          | Pet-care service catalog (day care, walking, grooming, boarding, training, veterinary) across 10 Korean cities                                      |
+| **discovery-pet**    | Pet adoption listings (dog, cat, rabbit, bird, hamster)                                                                                             |
+| **board-article**    | Community articles with categories, likes, views                                                                                                    |
+| **comment**          | Comments on articles, products, services and other targets                                                                                          |
+| **like** / **view**  | Polymorphic like & view tracking across 7–8 target types (agents, services, products, articles, Q&A, pets…)                                         |
+| **review**           | Ratings & reviews for products / services                                                                                                           |
+| **qna**              | Member questions with admin answers                                                                                                                 |
+| **faq** / **notice** | Help-center content managed by admins                                                                                                               |
+| **notification**     | Persistent notification inbox (orders, bookings, system) + unread counters, delivered live over WebSocket                                           |
+| **mail**             | Nodemailer SMTP transport + bilingual HTML templates (invoice, password-reset code)                                                                 |
+| **admin**            | Admin dashboard stats + moderation over all entities (members, products, bookings, articles, Q&A…)                                                  |
 
 Plus the **socket** module ([apps/petora-api/src/socket/socket.gateway.ts](apps/petora-api/src/socket/socket.gateway.ts)) — the WebSocket gateway described below.
 
@@ -129,7 +129,17 @@ Plus the **socket** module ([apps/petora-api/src/socket/socket.gateway.ts](apps/
   - `RolesGuard` + `@Roles(ADMIN | AGENT | USER)` — e.g. only **AGENT** creates services, only **ADMIN** reaches admin resolvers
   - `WithoutGuard` — optional auth: public queries still recognize a logged-in viewer (used for "did I like this?" flags)
 
-### 5.2 Payments — never trust the client
+### 5.2 Password Reset — emailed verification code
+
+A three-step flow ([member.service.ts](apps/petora-api/src/components/member/member.service.ts)) built so that neither the mutation nor the code becomes an oracle:
+
+1. **`requestPasswordReset`** (username + email) — **always returns `true`**, including for accounts that don't exist, a username/email pair that doesn't match, or Google-auth members, so the mutation can't be used to enumerate who has an account. When the pair _does_ match an active local member, any outstanding code is deleted and a fresh 6-digit code (`crypto.randomInt`) is stored **bcrypt-hashed** and emailed in KR/EN. Lifetime: **3 minutes**.
+2. **`verifyPasswordResetCode`** (username + code) — compared against the hash; every wrong guess increments `attempts`, and the record stops accepting guesses after **5**. On success the server returns a **single-use reset token** (256 CSPRNG bits) and extends the window to **10 minutes**, so choosing a new password isn't racing the code's countdown.
+3. **`resetPassword`** (reset token + new password) — finds the record by the token's SHA-256 digest, writes the new bcrypt hash, and stamps `consumedAt` so the token can never be replayed.
+
+Reset records live in their own `passwordResets` collection with a **MongoDB TTL index** on `expiresAt` — abandoned attempts delete themselves, so no cleanup job is needed. The two secrets are hashed differently on purpose: the 6-digit code is guessable and gets **bcrypt**'s cost factor, while the 256-bit token has no dictionary to slow down and uses **SHA-256**, whose deterministic digest keeps the final step a single indexed lookup.
+
+### 5.3 Payments — never trust the client
 
 The checkout flow ([order.service.ts](apps/petora-api/src/components/order/order.service.ts)) treats everything the browser sends as untrusted:
 
@@ -140,7 +150,7 @@ The checkout flow ([order.service.ts](apps/petora-api/src/components/order/order
 5. If the order cannot be recorded after payment, the server **automatically cancels (refunds) the payment** so no customer is ever charged for a lost order.
 6. On success: member reward point +1, a real-time `ORDER_CREATED` notification over WebSocket, and a **bilingual (KR/EN) HTML invoice email** sent fire-and-forget so mail latency never blocks checkout.
 
-### 5.3 Real-time WebSocket Gateway
+### 5.4 Real-time WebSocket Gateway
 
 A raw-`ws` gateway (not socket.io) authenticated by the JWT passed as `?token=` in the connection URL:
 
@@ -149,7 +159,7 @@ A raw-`ws` gateway (not socket.io) authenticated by the JWT passed as `?token=` 
 - **`message`** — public chat broadcast to all clients
 - **`notification`** — targeted push: when an order/booking event happens, the notification is delivered **only to the receiver's sockets** (all of their open tabs), while guests and other members receive nothing
 
-### 5.4 Nightly Ranking Batch (`petora-batch`)
+### 5.5 Nightly Ranking Batch (`petora-batch`)
 
 A separate server so heavy write bursts never compete with live API traffic. Every midnight, four cron jobs run 15 seconds apart:
 
@@ -162,15 +172,15 @@ A separate server so heavy write bursts never compete with live API traffic. Eve
 
 The computed `rank` fields power the "Top Products / Top Services / Top Agents" sections on the frontend with a single indexed sort — no aggregation at request time.
 
-### 5.5 File Uploads
+### 5.6 File Uploads
 
 Images are uploaded through GraphQL (`graphql-upload`, max 15 MB × 10 files) into target-scoped folders (`uploads/member`, `uploads/product`, `uploads/service`, …) and served statically at `/uploads`.
 
 ## 6. Data Models
 
-18 Mongoose schemas in [apps/petora-api/src/schemas/](apps/petora-api/src/schemas/):
+19 Mongoose schemas in [apps/petora-api/src/schemas/](apps/petora-api/src/schemas/):
 
-`Member` · `Product` · `Order` · `OrderItem` · `Booking` · `Service` · `DiscoveryPet` · `BoardArticle` · `Comment` · `Like` · `View` · `Review` · `QNA` · `FAQ` · `Notice` · `Notification` · `Billing` · `Receipt`
+`Member` · `Product` · `Order` · `OrderItem` · `Booking` · `Service` · `DiscoveryPet` · `BoardArticle` · `Comment` · `Like` · `View` · `Review` · `QNA` · `FAQ` · `Notice` · `Notification` · `Billing` · `Receipt` · `PasswordReset`
 
 All GraphQL enums (member types, statuses, order/booking lifecycles, notification types…) live in [apps/petora-api/src/libs/enums/](apps/petora-api/src/libs/enums/), and DTOs (input / output / update per domain) in [apps/petora-api/src/libs/dto/](apps/petora-api/src/libs/dto/).
 
@@ -180,7 +190,7 @@ All GraphQL enums (member types, statuses, order/booking lifecycles, notificatio
 
 - **Node.js** ≥ 18
 - **MongoDB** (local instance or MongoDB Atlas)
-- SMTP credentials (e.g. Gmail app password) — for invoice emails
+- SMTP credentials (e.g. Gmail app password) — for invoice & password-reset emails
 - PortOne V2 API secret — for payment verification
 - Google OAuth client ID — for Google login
 
@@ -211,7 +221,7 @@ GOOGLE_CLIENT_SECRET=<google oauth client secret>
 # Payments (PortOne V2)
 PORTONE_V2_API_SECRET=<portone v2 api secret>
 
-# Invoice emails (SMTP)
+# Emails — invoices & password-reset codes (SMTP)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=<smtp user>
@@ -267,7 +277,7 @@ petora-nest/
 │   │       │   ├── enums/           # All GraphQL enums
 │   │       │   ├── interceptor/     # Request/response logging
 │   │       │   └── config.ts        # Shared helpers (sorting, image types, …)
-│   │       ├── schemas/             # 18 Mongoose schemas
+│   │       ├── schemas/             # 19 Mongoose schemas
 │   │       ├── socket/              # WebSocket gateway (chat + notifications)
 │   │       └── main.ts              # Bootstrap: pipes, CORS, uploads, WS adapter
 │   └── petora-batch/                # Nightly ranking cron server
@@ -296,20 +306,20 @@ petora-nest/
 
 ## 2. 기술 스택
 
-| 계층          | 기술                                                                             | 용도                                                   |
-| ------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| 프레임워크    | **NestJS 10** (모노레포 모드)                                                    | 모듈형 서버 아키텍처, 의존성 주입                      |
-| 언어          | **TypeScript 5**                                                                 | 코드베이스 전체의 타입 안전성                          |
-| API           | **GraphQL** — Apollo Server 4, 코드 퍼스트(`autoSchemaFile`)                     | 클라이언트를 위한 단일 타입 지정 엔드포인트            |
-| 데이터베이스  | **MongoDB** + **Mongoose 8**                                                     | 18개 도메인 스키마의 도큐먼트 저장소                   |
-| 실시간        | **WebSocket** (`ws` + `@nestjs/platform-ws`)                                     | 실시간 채팅 + 대상 지정 푸시 알림                      |
-| 인증          | **JWT** (`@nestjs/jwt`) + **bcrypt** + **Google 로그인** (`google-auth-library`) | 무상태 인증, 비밀번호 해싱, 소셜 로그인                |
-| 결제          | **PortOne(포트원) V2 REST API**                                                  | 서버 사이드 결제 검증 및 자동 환불                     |
-| 이메일        | **Nodemailer** (SMTP)                                                            | 한/영 이중 언어 HTML 인보이스 이메일                   |
-| 스케줄링      | **@nestjs/schedule** (cron)                                                      | 야간 랭킹 배치 작업                                    |
-| 파일 업로드   | **graphql-upload**                                                               | 이미지 업로드(최대 15 MB × 10개), `/uploads` 정적 서빙 |
-| 유효성 검증   | **class-validator** + 전역 `ValidationPipe`                                      | 모든 GraphQL 입력을 서비스 도달 전에 검증              |
-| 테스트 / 품질 | **Jest**, **ESLint**, **Prettier**                                               | 단위·e2e 테스트, 일관된 코드 스타일                    |
+| 계층          | 기술                                                                             | 용도                                                     |
+| ------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| 프레임워크    | **NestJS 10** (모노레포 모드)                                                    | 모듈형 서버 아키텍처, 의존성 주입                        |
+| 언어          | **TypeScript 5**                                                                 | 코드베이스 전체의 타입 안전성                            |
+| API           | **GraphQL** — Apollo Server 4, 코드 퍼스트(`autoSchemaFile`)                     | 클라이언트를 위한 단일 타입 지정 엔드포인트              |
+| 데이터베이스  | **MongoDB** + **Mongoose 8**                                                     | 19개 도메인 스키마의 도큐먼트 저장소                     |
+| 실시간        | **WebSocket** (`ws` + `@nestjs/platform-ws`)                                     | 실시간 채팅 + 대상 지정 푸시 알림                        |
+| 인증          | **JWT** (`@nestjs/jwt`) + **bcrypt** + **Google 로그인** (`google-auth-library`) | 무상태 인증, 비밀번호 해싱, 소셜 로그인, 비밀번호 재설정 |
+| 결제          | **PortOne(포트원) V2 REST API**                                                  | 서버 사이드 결제 검증 및 자동 환불                       |
+| 이메일        | **Nodemailer** (SMTP)                                                            | 한/영 이중 언어 HTML 인보이스·비밀번호 재설정 이메일     |
+| 스케줄링      | **@nestjs/schedule** (cron)                                                      | 야간 랭킹 배치 작업                                      |
+| 파일 업로드   | **graphql-upload**                                                               | 이미지 업로드(최대 15 MB × 10개), `/uploads` 정적 서빙   |
+| 유효성 검증   | **class-validator** + 전역 `ValidationPipe`                                      | 모든 GraphQL 입력을 서비스 도달 전에 검증                |
+| 테스트 / 품질 | **Jest**, **ESLint**, **Prettier**                                               | 단위·e2e 테스트, 일관된 코드 스타일                      |
 
 ## 3. 아키텍처
 
@@ -339,7 +349,7 @@ flowchart LR
     DB[("MongoDB")]
     PORTONE["PortOne V2 API<br/>(결제 검증)"]
     GOOGLE["Google OAuth<br/>(ID 토큰 검증)"]
-    SMTP["SMTP<br/>(인보이스 이메일)"]
+    SMTP["SMTP<br/>(인보이스·인증 코드 이메일)"]
 
     FE -->|쿼리 & 뮤테이션| GQL
     FE <-->|ws: 채팅, 알림| WS
@@ -348,7 +358,7 @@ flowchart LR
     CRON --> DB
     GQL -->|결제 검증/취소| PORTONE
     GQL -->|Google ID 토큰 검증| GOOGLE
-    GQL -->|인보이스 발송| SMTP
+    GQL -->|인보이스·인증 코드 발송| SMTP
 ```
 
 **요청 파이프라인 (petora-api):** 모든 요청은 CORS → `graphql-upload` 미들웨어 → 전역 `ValidationPipe` → 전역 `LoggingInterceptor`(모든 오퍼레이션과 응답 시간 로깅) → 가드(`AuthGuard` / `RolesGuard` / `WithoutGuard`) → 리졸버 → 서비스 → Mongoose 모델 순으로 처리됩니다. GraphQL 에러는 전역 `formatError` 훅으로 정규화되어 클라이언트는 항상 일관된 `{ code, message }` 형태를 받습니다.
@@ -357,25 +367,25 @@ flowchart LR
 
 `petora-api`는 [apps/petora-api/src/components/](apps/petora-api/src/components/) 아래 19개의 기능 모듈로 구성되며, 모든 모듈이 동일한 **Resolver → Service → Schema** 패턴을 따릅니다.
 
-| 모듈                 | 담당 기능                                                                                                          |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **member**           | 회원가입/로그인, Google 로그인, 프로필, 에이전트 목록, 회원 통계(팔로워·좋아요·조회수·포인트), 이미지 업로드       |
-| **auth**             | JWT 발급·검증, bcrypt 비밀번호 해싱, Google ID 토큰 검증, 가드와 데코레이터(`@AuthMember`, `@Roles`)               |
-| **product**          | 반려동물 용품 카탈로그 — CRUD, 유형·반려동물 종류·가격대별 필터/정렬/페이지네이션 검색                             |
-| **order**            | 결제 플로우: 서버 사이드 가격 계산, PortOne 결제 검증, 주문·주문항목 기록, 배송 상태 추적                          |
-| **payment**          | PortOne V2 REST 클라이언트 — `verifyPaid`, `cancelPayment`(자동 환불), 결제수단 매핑                               |
-| **booking**          | 서비스 예약 — `PENDING → CONFIRMED → COMPLETED / CANCELLED / REJECTED` 상태 수명주기를 고객과 에이전트가 함께 관리 |
-| **service**          | 펫케어 서비스 카탈로그(데이케어, 산책, 미용, 위탁, 훈련, 동물병원) — 전국 10개 도시                                |
-| **discovery-pet**    | 반려동물 입양 공고(강아지, 고양이, 토끼, 새, 햄스터)                                                               |
-| **board-article**    | 카테고리·좋아요·조회수를 갖춘 커뮤니티 게시판                                                                      |
-| **comment**          | 게시글·상품·서비스 등 여러 대상에 대한 댓글                                                                        |
-| **like** / **view**  | 7~8개 대상 유형(에이전트, 서비스, 상품, 게시글, Q&A, 반려동물 등)에 대한 다형성 좋아요·조회수 추적                 |
-| **review**           | 상품/서비스 평점 및 리뷰                                                                                           |
-| **qna**              | 회원 질문과 관리자 답변                                                                                            |
-| **faq** / **notice** | 관리자가 관리하는 고객센터 콘텐츠                                                                                  |
-| **notification**     | 알림함(주문·예약·시스템) + 미읽음 카운터, WebSocket으로 실시간 전달                                                |
-| **mail**             | Nodemailer SMTP 전송 + 한/영 이중 언어 HTML 인보이스 템플릿                                                        |
-| **admin**            | 관리자 대시보드 통계 + 전체 엔티티(회원, 상품, 예약, 게시글, Q&A 등) 운영 관리                                     |
+| 모듈                 | 담당 기능                                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **member**           | 회원가입/로그인, Google 로그인, 이메일 인증 코드 기반 비밀번호 재설정, 프로필, 에이전트 목록, 회원 통계(팔로워·좋아요·조회수·포인트), 이미지 업로드 |
+| **auth**             | JWT 발급·검증, bcrypt 비밀번호 해싱, Google ID 토큰 검증, 가드와 데코레이터(`@AuthMember`, `@Roles`)                                                |
+| **product**          | 반려동물 용품 카탈로그 — CRUD, 유형·반려동물 종류·가격대별 필터/정렬/페이지네이션 검색                                                              |
+| **order**            | 결제 플로우: 서버 사이드 가격 계산, PortOne 결제 검증, 주문·주문항목 기록, 배송 상태 추적                                                           |
+| **payment**          | PortOne V2 REST 클라이언트 — `verifyPaid`, `cancelPayment`(자동 환불), 결제수단 매핑                                                                |
+| **booking**          | 서비스 예약 — `PENDING → CONFIRMED → COMPLETED / CANCELLED / REJECTED` 상태 수명주기를 고객과 에이전트가 함께 관리                                  |
+| **service**          | 펫케어 서비스 카탈로그(데이케어, 산책, 미용, 위탁, 훈련, 동물병원) — 전국 10개 도시                                                                 |
+| **discovery-pet**    | 반려동물 입양 공고(강아지, 고양이, 토끼, 새, 햄스터)                                                                                                |
+| **board-article**    | 카테고리·좋아요·조회수를 갖춘 커뮤니티 게시판                                                                                                       |
+| **comment**          | 게시글·상품·서비스 등 여러 대상에 대한 댓글                                                                                                         |
+| **like** / **view**  | 7~8개 대상 유형(에이전트, 서비스, 상품, 게시글, Q&A, 반려동물 등)에 대한 다형성 좋아요·조회수 추적                                                  |
+| **review**           | 상품/서비스 평점 및 리뷰                                                                                                                            |
+| **qna**              | 회원 질문과 관리자 답변                                                                                                                             |
+| **faq** / **notice** | 관리자가 관리하는 고객센터 콘텐츠                                                                                                                   |
+| **notification**     | 알림함(주문·예약·시스템) + 미읽음 카운터, WebSocket으로 실시간 전달                                                                                 |
+| **mail**             | Nodemailer SMTP 전송 + 한/영 이중 언어 HTML 템플릿(인보이스, 비밀번호 재설정 코드)                                                                  |
+| **admin**            | 관리자 대시보드 통계 + 전체 엔티티(회원, 상품, 예약, 게시글, Q&A 등) 운영 관리                                                                      |
 
 그리고 **socket** 모듈([apps/petora-api/src/socket/socket.gateway.ts](apps/petora-api/src/socket/socket.gateway.ts)) — 아래에서 설명하는 WebSocket 게이트웨이가 있습니다.
 
@@ -391,7 +401,17 @@ flowchart LR
   - `RolesGuard` + `@Roles(ADMIN | AGENT | USER)` — 예: 서비스 등록은 **AGENT**만, 관리자 리졸버는 **ADMIN**만
   - `WithoutGuard` — 선택적 인증: 공개 쿼리에서도 로그인한 사용자를 인식 ("내가 좋아요를 눌렀는지" 표시에 사용)
 
-### 5.2 결제 — 클라이언트를 신뢰하지 않는 설계
+### 5.2 비밀번호 재설정 — 이메일 인증 코드
+
+뮤테이션이나 인증 코드가 계정 정보를 알려주는 통로가 되지 않도록 설계한 3단계 플로우입니다([member.service.ts](apps/petora-api/src/components/member/member.service.ts)).
+
+1. **`requestPasswordReset`** (아이디 + 이메일) — 존재하지 않는 계정이든, 아이디와 이메일이 일치하지 않든, Google 로그인 회원이든 **항상 `true`를 반환**하므로 이 뮤테이션으로 가입 여부를 알아낼 수 없습니다. 실제로 일치하는 활성 로컬 회원인 경우에만 기존 코드를 삭제하고, 새로운 6자리 코드(`crypto.randomInt`)를 **bcrypt로 해싱**해 저장한 뒤 한/영 이메일로 발송합니다. 유효 시간은 **3분**입니다.
+2. **`verifyPasswordResetCode`** (아이디 + 코드) — 해시와 대조하며, 틀릴 때마다 `attempts`가 증가해 **5회**를 넘으면 더 이상 시도를 받지 않습니다. 성공하면 **일회용 재설정 토큰**(CSPRNG 256비트)을 반환하고 유효 시간을 **10분**으로 연장하여, 새 비밀번호를 입력하는 동안 코드 카운트다운에 쫓기지 않도록 했습니다.
+3. **`resetPassword`** (재설정 토큰 + 새 비밀번호) — 토큰의 SHA-256 다이제스트로 레코드를 찾아 새 bcrypt 해시를 저장하고 `consumedAt`을 기록하므로, 같은 토큰을 재사용할 수 없습니다.
+
+재설정 레코드는 별도의 `passwordResets` 컬렉션에 저장되며 `expiresAt`에 **MongoDB TTL 인덱스**가 걸려 있어, 중단된 시도는 스스로 삭제됩니다(별도 정리 작업 불필요). 두 비밀값의 해싱 방식이 다른 것은 의도된 설계입니다. 6자리 코드는 추측이 가능하므로 **bcrypt**의 연산 비용이 필요하지만, 256비트 토큰은 대입할 사전 자체가 없고 결정적 다이제스트인 **SHA-256** 덕분에 마지막 단계를 인덱스 조회 한 번으로 처리할 수 있습니다.
+
+### 5.3 결제 — 클라이언트를 신뢰하지 않는 설계
 
 결제 플로우([order.service.ts](apps/petora-api/src/components/order/order.service.ts))는 브라우저가 보내는 모든 값을 신뢰하지 않는다는 전제로 설계했습니다.
 
@@ -402,7 +422,7 @@ flowchart LR
 5. 결제 후 주문 기록에 실패하면 서버가 **결제를 자동 취소(환불)**하므로, 주문 없이 돈만 빠져나가는 상황이 발생하지 않습니다.
 6. 성공 시: 회원 포인트 +1, WebSocket으로 `ORDER_CREATED` 실시간 알림 발송, 그리고 **한/영 이중 언어 HTML 인보이스 이메일**을 비동기(fire-and-forget)로 발송하여 메일 지연이 결제 응답을 막지 않도록 했습니다.
 
-### 5.3 실시간 WebSocket 게이트웨이
+### 5.4 실시간 WebSocket 게이트웨이
 
 연결 URL의 `?token=` 쿼리 파라미터로 JWT 인증을 수행하는 순수 `ws` 게이트웨이입니다(socket.io 미사용).
 
@@ -411,7 +431,7 @@ flowchart LR
 - **`message`** — 전체 클라이언트 대상 공개 채팅 브로드캐스트
 - **`notification`** — 대상 지정 푸시: 주문/예약 이벤트 발생 시 **수신자의 소켓에만**(열려 있는 모든 탭 포함) 전달되며, 게스트나 다른 회원에게는 전송되지 않습니다
 
-### 5.4 야간 랭킹 배치 (`petora-batch`)
+### 5.5 야간 랭킹 배치 (`petora-batch`)
 
 대량 쓰기 작업이 실시간 API 트래픽과 경쟁하지 않도록 별도 서버로 분리했습니다. 매일 자정, 4개의 크론 작업이 15초 간격으로 실행됩니다.
 
@@ -424,15 +444,15 @@ flowchart LR
 
 계산된 `rank` 필드 덕분에 프론트엔드의 "인기 상품 / 인기 서비스 / 인기 에이전트" 섹션은 요청 시점의 집계 없이 인덱스 정렬 한 번으로 제공됩니다.
 
-### 5.5 파일 업로드
+### 5.6 파일 업로드
 
 이미지는 GraphQL(`graphql-upload`, 최대 15 MB × 10개)로 업로드되어 대상별 폴더(`uploads/member`, `uploads/product`, `uploads/service` 등)에 저장되고, `/uploads` 경로에서 정적으로 서빙됩니다.
 
 ## 6. 데이터 모델
 
-[apps/petora-api/src/schemas/](apps/petora-api/src/schemas/)에 18개의 Mongoose 스키마가 있습니다.
+[apps/petora-api/src/schemas/](apps/petora-api/src/schemas/)에 19개의 Mongoose 스키마가 있습니다.
 
-`Member` · `Product` · `Order` · `OrderItem` · `Booking` · `Service` · `DiscoveryPet` · `BoardArticle` · `Comment` · `Like` · `View` · `Review` · `QNA` · `FAQ` · `Notice` · `Notification` · `Billing` · `Receipt`
+`Member` · `Product` · `Order` · `OrderItem` · `Booking` · `Service` · `DiscoveryPet` · `BoardArticle` · `Comment` · `Like` · `View` · `Review` · `QNA` · `FAQ` · `Notice` · `Notification` · `Billing` · `Receipt` · `PasswordReset`
 
 모든 GraphQL enum(회원 유형, 상태, 주문/예약 수명주기, 알림 유형 등)은 [apps/petora-api/src/libs/enums/](apps/petora-api/src/libs/enums/)에, 도메인별 DTO(input / output / update)는 [apps/petora-api/src/libs/dto/](apps/petora-api/src/libs/dto/)에 있습니다.
 
@@ -442,7 +462,7 @@ flowchart LR
 
 - **Node.js** ≥ 18
 - **MongoDB** (로컬 또는 MongoDB Atlas)
-- SMTP 계정 정보(예: Gmail 앱 비밀번호) — 인보이스 이메일 발송용
+- SMTP 계정 정보(예: Gmail 앱 비밀번호) — 인보이스·비밀번호 재설정 이메일 발송용
 - PortOne V2 API Secret — 결제 검증용
 - Google OAuth 클라이언트 ID — Google 로그인용
 
@@ -473,7 +493,7 @@ GOOGLE_CLIENT_SECRET=<Google OAuth 클라이언트 시크릿>
 # 결제 (PortOne V2)
 PORTONE_V2_API_SECRET=<PortOne V2 API Secret>
 
-# 인보이스 이메일 (SMTP)
+# 이메일 — 인보이스·비밀번호 재설정 코드 (SMTP)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=<SMTP 사용자>
@@ -529,7 +549,7 @@ petora-nest/
 │   │       │   ├── enums/           # 모든 GraphQL enum
 │   │       │   ├── interceptor/     # 요청/응답 로깅
 │   │       │   └── config.ts        # 공용 헬퍼 (정렬, 이미지 타입 등)
-│   │       ├── schemas/             # 18개 Mongoose 스키마
+│   │       ├── schemas/             # 19개 Mongoose 스키마
 │   │       ├── socket/              # WebSocket 게이트웨이 (채팅 + 알림)
 │   │       └── main.ts              # 부트스트랩: 파이프, CORS, 업로드, WS 어댑터
 │   └── petora-batch/                # 야간 랭킹 크론 서버
