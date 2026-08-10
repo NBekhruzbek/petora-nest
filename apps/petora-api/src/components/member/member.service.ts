@@ -13,7 +13,7 @@ import {
 } from '../../libs/dto/member/member.input';
 import { MailService } from '../mail/mail.service';
 import { MemberAuthType, MemberStatus, MemberType } from '../../libs/enums/member.enum';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { AuthService } from '../auth/auth.service';
 import { MemberBillingUpdate, MemberUpdate } from '../../libs/dto/member/member.update';
@@ -102,7 +102,7 @@ export class MemberService {
 					memberFullName: name,
 					memberImage: picture ?? '',
 					memberPhone: `google-${sub}`,
-					memberPassword: await this.authService.hashPassword(uuidv4()),
+					memberPassword: await this.authService.hashPassword(randomUUID()),
 					memberAuthType: MemberAuthType.GOOGLE,
 				});
 			} catch (err) {
