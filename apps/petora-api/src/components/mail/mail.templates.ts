@@ -34,7 +34,14 @@ const formatDate = (date: Date): string =>
 		timeZone: 'Asia/Seoul',
 	});
 
-const layout = (title: string, subtitleKo: string, subtitleEn: string, body: string): string => `
+const layout = (
+	title: string,
+	subtitleKo: string,
+	subtitleEn: string,
+	body: string,
+	footerKo: string,
+	footerEn: string,
+): string => `
 <div style="margin:0;padding:24px 0;background:#f4f5f7;font-family:${FONT};">
 	<div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;">
 		<div style="background:#1f2937;padding:24px 32px;">
@@ -46,8 +53,8 @@ const layout = (title: string, subtitleKo: string, subtitleEn: string, body: str
 			<p style="margin:0 0 24px;font-size:13px;color:#9ca3af;">${subtitleEn}</p>
 			${body}
 			<p style="margin:32px 0 0;font-size:12px;color:#9ca3af;line-height:1.6;">
-				본 메일은 Petora에서 자동 발송된 거래명세서입니다. 문의사항은 본 메일로 회신해 주세요.
-				<br />This is an automatically generated invoice from Petora. If you have any questions, reply to this email.
+				${footerKo}
+				<br />${footerEn}
 			</p>
 		</div>
 	</div>
@@ -108,5 +115,32 @@ export const orderInvoiceHtml = (order: Order, lines: InvoiceLine[]): string => 
 		`${order.receiverName}님, 주문해 주셔서 감사합니다.`,
 		`Thank you for your order, ${order.receiverName}.`,
 		body,
+		'본 메일은 Petora에서 자동 발송된 거래명세서입니다. 문의사항은 본 메일로 회신해 주세요.',
+		'This is an automatically generated invoice from Petora. If you have any questions, reply to this email.',
+	);
+};
+
+export const passwordResetHtml = (memberUserName: string, code: string, minutes: number): string => {
+	const body = `
+<div style="margin:0 0 24px;padding:20px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;text-align:center;">
+	<p style="margin:0 0 8px;font-size:12px;color:#6b7280;">${bi('인증 코드', 'Verification code')}</p>
+	<p style="margin:0;font-size:32px;font-weight:bold;color:#111827;letter-spacing:8px;font-family:${FONT};">${code}</p>
+</div>
+<table style="width:100%;border-collapse:collapse;font-family:${FONT};">
+	${row(bi('계정', 'Account'), memberUserName)}
+	${row(bi('유효시간', 'Valid for'), bi(`${minutes}분`, `${minutes} minutes`))}
+</table>
+<p style="margin:24px 0 0;font-size:13px;color:#6b7280;line-height:1.6;">
+	본인이 요청하지 않았다면 이 메일을 무시하세요. 비밀번호는 변경되지 않습니다.
+	<br /><span style="color:#9ca3af;">If you did not request this, ignore this email — your password will not change.</span>
+</p>`;
+
+	return layout(
+		bi('비밀번호 재설정', 'Password reset'),
+		`${memberUserName}님, 아래 인증 코드를 입력해 주세요.`,
+		`${memberUserName}, enter the verification code below to continue.`,
+		body,
+		'본 메일은 Petora에서 자동 발송되었습니다. 인증 코드는 누구에게도 알려주지 마세요.',
+		'This email was sent automatically by Petora. Never share your verification code with anyone.',
 	);
 };

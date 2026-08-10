@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { Order } from '../../libs/dto/order/order';
-import { InvoiceLine, orderInvoiceHtml } from './mail.templates';
+import { InvoiceLine, orderInvoiceHtml, passwordResetHtml } from './mail.templates';
 
 @Injectable()
 export class MailService {
@@ -35,6 +35,20 @@ export class MailService {
 			this.logger.error(
 				`Invoice email failed, order ${order.orderNumber}: ${err instanceof Error ? err.message : err}`,
 			);
+		}
+	}
+
+	public async sendPasswordResetCode(to: string, memberUserName: string, code: string, minutes: number): Promise<void> {
+		try {
+			await this.getTransporter().sendMail({
+				from: process.env.MAIL_FROM,
+				to: to,
+				subject: `Petora — 비밀번호 재설정 인증 코드 / Password reset code`,
+				html: passwordResetHtml(memberUserName, code, minutes),
+			});
+		} catch (err) {
+			this.logger.error(`Reset email failed for ${memberUserName}: ${err instanceof Error ? err.message : err}`);
+			throw err;
 		}
 	}
 }
