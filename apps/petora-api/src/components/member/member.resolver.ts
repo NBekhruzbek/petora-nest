@@ -1,7 +1,15 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { MemberService } from './member.service';
 import { UseGuards } from '@nestjs/common';
-import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
+import {
+	AgentsInquiry,
+	LoginInput,
+	MemberInput,
+	MembersInquiry,
+	PasswordResetInput,
+	PasswordResetRequestInput,
+	PasswordResetVerifyInput,
+} from '../../libs/dto/member/member.input';
 import { Member, MemberBillingInfos, Members } from '../../libs/dto/member/member';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
@@ -36,6 +44,26 @@ export class MemberResolver {
 	public async loginAndSignupWithGoogle(@Args('idToken') idToken: string): Promise<Member> {
 		console.log('Mutation: loginAndSignupWithGoogle');
 		return await this.memberService.loginAndSignupWithGoogle(idToken);
+	}
+
+	/** Always resolves true, including for accounts that do not exist. */
+	@Mutation(() => Boolean)
+	public async requestPasswordReset(@Args('input') input: PasswordResetRequestInput): Promise<boolean> {
+		console.log('Mutation: requestPasswordReset');
+		return await this.memberService.requestPasswordReset(input);
+	}
+
+	/** Returns the single-use token the reset step consumes. */
+	@Mutation(() => String)
+	public async verifyPasswordResetCode(@Args('input') input: PasswordResetVerifyInput): Promise<string> {
+		console.log('Mutation: verifyPasswordResetCode');
+		return await this.memberService.verifyPasswordResetCode(input);
+	}
+
+	@Mutation(() => Boolean)
+	public async resetPassword(@Args('input') input: PasswordResetInput): Promise<boolean> {
+		console.log('Mutation: resetPassword');
+		return await this.memberService.resetPassword(input);
 	}
 
 	// Authentication => Who are you?

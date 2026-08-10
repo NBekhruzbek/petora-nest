@@ -9,3 +9,13 @@ export interface StatisticModifier {
 	targetKey: string;
 	modifier: number;
 }
+
+export interface PasswordReset {
+	_id: Types.ObjectId;
+	memberId: Types.ObjectId;
+	codeHash: string;
+	resetTokenHash?: string;
+	attempts: number;
+	consumedAt?: Date;
+	expiresAt: Date;
+}

@@ -50,6 +50,44 @@ export class LoginInput {
 }
 
 @InputType()
+export class PasswordResetRequestInput {
+	@IsNotEmpty()
+	@Length(3, 15)
+	@Field(() => String)
+	memberUserName: string;
+
+	@IsNotEmpty()
+	@IsEmail()
+	@Field(() => String)
+	memberEmail: string;
+}
+
+@InputType()
+export class PasswordResetVerifyInput {
+	@IsNotEmpty()
+	@Length(3, 15)
+	@Field(() => String)
+	memberUserName: string;
+
+	@IsNotEmpty()
+	@Length(6, 6)
+	@Field(() => String)
+	code: string;
+}
+
+@InputType()
+export class PasswordResetInput {
+	@IsNotEmpty()
+	@Field(() => String)
+	resetToken: string;
+
+	@IsNotEmpty()
+	@Length(5, 20)
+	@Field(() => String)
+	memberPassword: string;
+}
+
+@InputType()
 class AISearch {
 	@IsOptional()
 	@Field(() => String, { nullable: true })

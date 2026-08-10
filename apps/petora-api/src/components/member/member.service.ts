@@ -2,13 +2,22 @@ import { BadRequestException, Injectable, InternalServerErrorException } from '@
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Member, MemberBillingInfos, Members } from '../../libs/dto/member/member';
-import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
+import {
+	AgentsInquiry,
+	LoginInput,
+	MemberInput,
+	MembersInquiry,
+	PasswordResetInput,
+	PasswordResetRequestInput,
+	PasswordResetVerifyInput,
+} from '../../libs/dto/member/member.input';
+import { MailService } from '../mail/mail.service';
 import { MemberAuthType, MemberStatus, MemberType } from '../../libs/enums/member.enum';
 import { v4 as uuidv4 } from 'uuid';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { AuthService } from '../auth/auth.service';
 import { MemberBillingUpdate, MemberUpdate } from '../../libs/dto/member/member.update';
-import { StatisticModifier, T } from '../../libs/types/common';
+import { PasswordReset, StatisticModifier, T } from '../../libs/types/common';
 import { ViewService } from '../view/view.service';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
@@ -16,15 +25,24 @@ import { lookupAuthMemberLiked, shapeIntoMongoObjectId } from '../../libs/config
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
+import { createHash, randomBytes, randomInt } from 'crypto';
+
+// Mirrors the 180s countdown the login dialog already draws on its OTP screen.
+const RESET_CODE_TTL_MINUTES = 3;
+// Applies once the code verifies, so picking a password is not racing that countdown.
+const RESET_SESSION_TTL_MINUTES = 10;
+const MAX_RESET_ATTEMPTS = 5;
 
 @Injectable()
 export class MemberService {
 	constructor(
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
 		@InjectModel('Billing') private readonly billingModel: Model<MemberBillingInfos>,
+		@InjectModel('PasswordReset') private readonly passwordResetModel: Model<PasswordReset>,
 		private authService: AuthService,
 		private viewService: ViewService,
 		private likeService: LikeService,
+		private mailService: MailService,
 	) {}
 
 	public async signup(input: MemberInput): Promise<Member> {
@@ -112,6 +130,102 @@ export class MemberService {
 		memberUserName = memberUserName.trim().toLowerCase();
 		const result = await this.memberModel.findOne({ memberUserName: memberUserName }).exec();
 		return !result;
+	}
+
+	public async requestPasswordReset(input: PasswordResetRequestInput): Promise<boolean> {
+		const memberUserName = input.memberUserName.trim().toLowerCase();
+		const memberEmail = input.memberEmail.trim().toLowerCase();
+
+		const member: Member = await this.memberModel
+			.findOne({ memberUserName: memberUserName, memberStatus: MemberStatus.ACTIVE })
+			.exec();
+
+		if (!member) return true;
+		if (member.memberAuthType === MemberAuthType.GOOGLE) return true;
+		if ((member.memberEmail ?? '').trim().toLowerCase() !== memberEmail) return true;
+
+		await this.passwordResetModel.deleteMany({ memberId: member._id, consumedAt: null }).exec();
+
+		const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+		await this.passwordResetModel.create({
+			memberId: member._id,
+			codeHash: await this.authService.hashPassword(code),
+			expiresAt: new Date(Date.now() + RESET_CODE_TTL_MINUTES * 60 * 1000),
+		});
+
+		await this.mailService.sendPasswordResetCode(
+			member.memberEmail,
+			member.memberUserName,
+			code,
+			RESET_CODE_TTL_MINUTES,
+		);
+
+		return true;
+	}
+
+	public async verifyPasswordResetCode(input: PasswordResetVerifyInput): Promise<string> {
+		const memberUserName = input.memberUserName.trim().toLowerCase();
+
+		const member: Member = await this.memberModel
+			.findOne({ memberUserName: memberUserName, memberStatus: MemberStatus.ACTIVE })
+			.exec();
+		if (!member) throw new BadRequestException(Message.INVALID_RESET_CODE);
+
+		const reset: PasswordReset = await this.passwordResetModel
+			.findOne({ memberId: member._id, consumedAt: null, expiresAt: { $gt: new Date() } })
+			.sort({ createdAt: -1 })
+			.exec();
+		if (!reset || reset.attempts >= MAX_RESET_ATTEMPTS) throw new BadRequestException(Message.INVALID_RESET_CODE);
+
+		const isMatch = await this.authService.comparePasswords(input.code, reset.codeHash);
+		if (!isMatch) {
+			await this.passwordResetModel.updateOne({ _id: reset._id }, { $inc: { attempts: 1 } }).exec();
+			throw new BadRequestException(Message.INVALID_RESET_CODE);
+		}
+
+		const resetToken = randomBytes(32).toString('hex');
+		await this.passwordResetModel
+			.updateOne(
+				{ _id: reset._id },
+				{
+					resetTokenHash: this.hashResetToken(resetToken),
+					expiresAt: new Date(Date.now() + RESET_SESSION_TTL_MINUTES * 60 * 1000),
+				},
+			)
+			.exec();
+
+		return resetToken;
+	}
+
+	public async resetPassword(input: PasswordResetInput): Promise<boolean> {
+		const reset: PasswordReset = await this.passwordResetModel
+			.findOne({
+				resetTokenHash: this.hashResetToken(input.resetToken),
+				consumedAt: null,
+				expiresAt: { $gt: new Date() },
+			})
+			.exec();
+		if (!reset) throw new BadRequestException(Message.EXPIRED_RESET_SESSION);
+
+		const memberPassword = await this.authService.hashPassword(input.memberPassword);
+		const result = await this.memberModel
+			.updateOne({ _id: reset.memberId, memberStatus: MemberStatus.ACTIVE }, { memberPassword: memberPassword })
+			.exec();
+		if (!result.matchedCount) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		await this.passwordResetModel.updateOne({ _id: reset._id }, { consumedAt: new Date() }).exec();
+
+		return true;
+	}
+
+	/**
+	 * SHA-256 rather than bcrypt: the token is 256 CSPRNG bits, so there is no
+	 * dictionary to slow down, and a deterministic digest is what makes the reset
+	 * step a single indexed lookup instead of a bcrypt scan over every live request.
+	 * The six-digit code stays on bcrypt — it is guessable and needs the cost.
+	 */
+	private hashResetToken(resetToken: string): string {
+		return createHash('sha256').update(resetToken).digest('hex');
 	}
 
 	public async updateMember(memberId: Types.ObjectId, input: MemberUpdate): Promise<Member> {
