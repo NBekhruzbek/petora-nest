@@ -1,0 +1,42 @@
+version: '3.3'
+
+services:
+  petora-api:
+    container_name: petora-api
+    restart: always
+    image: node:20.10.0
+    ports:
+      - 4010:4000
+    volumes:
+      - ./:/usr/src/petora
+    working_dir: /usr/src/petora
+
+    networks:
+      - monorepo-network
+
+    # FOR PRODUCTION
+    command: bash -c "npm install && npm run build && npm run start:prod"
+
+  petora-batch:
+    container_name: petora-batch
+    restart: unless-stopped
+    image: node:20.10.0
+    ports:
+      - 4011:4001
+    volumes:
+      - ./:/usr/src/petora
+    working_dir: /usr/src/petora
+
+    networks:
+      - monorepo-network
+
+    # FOR PRODUCTION
+    command: bash -c "npm install && npm run build && npm run start:prod:batch"
+
+networks:
+  monorepo-network:
+    driver: bridge
+
+# petora-next:4000 <=> container:3000
+# petora-api:4010 <=> container:4000
+# petora-batch:4011 <=> container:4001
