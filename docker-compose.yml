@@ -1,5 +1,3 @@
-version: '3.3'
-
 services:
   petora-api:
     container_name: petora-api
