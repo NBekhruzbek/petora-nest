@@ -46,6 +46,14 @@ export class MemberService {
 	) {}
 
 	public async signup(input: MemberInput): Promise<Member> {
+		if (input.memberType === MemberType.ADMIN) {
+			const adminExists = await this.memberModel.exists({
+				memberType: MemberType.ADMIN,
+				memberStatus: { $ne: MemberStatus.DELETE },
+			});
+			if (adminExists) throw new BadRequestException(Message.ADMIN_ALREADY_EXISTS);
+		}
+
 		input.memberPassword = await this.authService.hashPassword(input.memberPassword);
 		input.memberUserName = input.memberUserName.trim().toLowerCase();
 
