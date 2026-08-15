@@ -262,7 +262,7 @@ export class ProductService {
 					},
 				},
 				{ $sort: { productLikes: -1 } },
-				{ $limit: 5 },
+				{ $limit: 4 },
 				lookupAuthMemberLiked(memberId),
 			])
 			.exec();
