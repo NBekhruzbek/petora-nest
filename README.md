@@ -259,7 +259,81 @@ npm run lint        # ESLint (auto-fix)
 npm run format      # Prettier
 ```
 
-## 9. Project Structure
+## 9. Deployment
+
+Both servers run as Docker containers straight from the repository checkout on the host — there is **no Dockerfile and no image build**. [docker-compose.yml](docker-compose.yml) starts two plain `node:20.10.0` containers that bind-mount the project directory (`./` → `/usr/src/petora`) and then install, build and start inside the container.
+
+| Service        | Container      | Host → container | Start command                                                       | Restart policy   |
+| -------------- | -------------- | ---------------- | ------------------------------------------------------------------- | ---------------- |
+| `petora-api`   | `petora-api`   | **4010** → 4000  | `rm -rf dist && npm install && npm run build && npm run start:prod` | `always`         |
+| `petora-batch` | `petora-batch` | **4011** → 4001  | `npm install && npm run build && npm run start:prod:batch`          | `unless-stopped` |
+
+Both join the `monorepo-network` bridge network. The frontend ([petora-next](https://github.com/NBekhruzbek/petora-next)) is deployed the same way from its own repository, with its own compose file — so the full port map on a server is:
+
+```
+petora-next    host 4000  →  container 3000    # Next.js
+petora-api     host 4010  →  container 4000    # GraphQL + WebSocket
+petora-batch   host 4011  →  container 4001    # nightly ranking cron
+```
+
+### First deploy on a server
+
+```bash
+# 1. Docker Engine + Compose plugin must be installed
+git clone https://github.com/NBekhruzbek/petora-nest.git
+cd petora-nest
+
+# 2. Create .env — it is gitignored, so a fresh clone has none.
+#    Use the template in section 7, with production values.
+nano .env
+
+# 3. Start both services
+docker compose up -d
+
+# 4. Watch the first build (npm install + nest build happen inside the container)
+docker compose logs -f petora-api
+```
+
+The API is healthy once the log prints `MongoDB is connected into production DB` — `npm run start:prod` sets `NODE_ENV=production`, so [database.module.ts](apps/petora-api/src/database/database.module.ts) connects to `MONGO_PROD` instead of `MONGO_DEV`.
+
+Two things to get right in the server `.env`:
+
+- **`PORT_API=4000` and `PORT_BATCH=4001`** — these are the _container-side_ ports that Compose publishes as 4010 and 4011. Changing them breaks the port mapping.
+- **`MONGO_PROD`** — MongoDB is **not** part of the compose stack; point this at MongoDB Atlas or a database host you manage.
+
+### Redeploying
+
+[deploy.sh](deploy.sh) is the one-command redeploy:
+
+```bash
+./deploy.sh
+```
+
+It runs `git reset --hard` → `git checkout main` → `git pull origin main` → `docker compose up -d`, so the server checkout can never drift from `main`. The hard reset **discards any uncommitted change in the server checkout** — keep no local edits there. It does not touch `.env` or `uploads/`, since both are gitignored.
+
+> **Note — a pull alone does not ship new code.** The source lives on a bind mount and `docker compose up -d` leaves an unchanged service running (`Container petora-api is up-to-date`), so the Node process keeps serving the previously built `dist`. Restart the containers to rebuild:
+>
+> ```bash
+> docker compose restart          # re-runs npm install + build + start
+> ```
+
+### Operating notes
+
+```bash
+docker compose ps                       # container status
+docker compose logs -f petora-api       # follow API logs
+docker compose restart petora-batch     # rebuild + restart one service
+docker compose down                     # stop and remove both containers
+docker compose exec petora-api bash     # shell inside the container
+```
+
+- **Uploads** — `uploads/` is served statically at `/uploads` and lives on the host through the bind mount, so images survive container recreation. It is gitignored: include it in backups, as nothing else does.
+- **Dependencies** — every container start runs `npm install` into the mounted checkout, so `node_modules/` is shared with the host and a plain restart is enough after a dependency change.
+- **Concurrent builds** — both services build from the same mounted directory at the same time, and the API deletes `dist` first. If the batch container ever comes up against a half-written `dist`, `docker compose restart petora-batch` after the API is up.
+- **No TLS or reverse proxy here** — the containers publish plain HTTP ports. Put nginx (or similar) in front for a domain and HTTPS. CORS is `origin: true`, so the API accepts browser requests from any origin.
+- **GraphQL Playground stays enabled in production** (`playground: true` in [app.module.ts](apps/petora-api/src/app.module.ts)), which makes the full schema publicly browsable at `/graphql`. Disable it if that is not wanted.
+
+## 10. Project Structure
 
 ```
 petora-nest/
@@ -283,6 +357,8 @@ petora-nest/
 │   └── petora-batch/                # Nightly ranking cron server
 ├── scripts/                         # One-off data migration scripts
 ├── uploads/                         # Uploaded images (served statically)
+├── docker-compose.yml               # Production containers (API + batch)
+├── deploy.sh                        # Reset to main, pull, restart containers
 └── package.json                     # Monorepo scripts (API + batch)
 ```
 
@@ -531,7 +607,81 @@ npm run lint        # ESLint (자동 수정)
 npm run format      # Prettier
 ```
 
-## 9. 프로젝트 구조
+## 9. 배포
+
+두 서버 모두 호스트에 clone한 저장소를 그대로 Docker 컨테이너로 실행합니다 — **Dockerfile도, 이미지 빌드도 없습니다.** [docker-compose.yml](docker-compose.yml)은 순수한 `node:20.10.0` 컨테이너 두 개를 띄우고, 프로젝트 디렉터리를 그대로 마운트한 뒤(`./` → `/usr/src/petora`) 컨테이너 안에서 설치·빌드·실행을 수행합니다.
+
+| 서비스         | 컨테이너       | 호스트 → 컨테이너 | 시작 명령                                                           | 재시작 정책      |
+| -------------- | -------------- | ----------------- | ------------------------------------------------------------------- | ---------------- |
+| `petora-api`   | `petora-api`   | **4010** → 4000   | `rm -rf dist && npm install && npm run build && npm run start:prod` | `always`         |
+| `petora-batch` | `petora-batch` | **4011** → 4001   | `npm install && npm run build && npm run start:prod:batch`          | `unless-stopped` |
+
+두 컨테이너는 `monorepo-network` 브리지 네트워크에 연결됩니다. 프론트엔드([petora-next](https://github.com/NBekhruzbek/petora-next))도 자체 저장소의 자체 compose 파일로 같은 방식으로 배포되므로, 서버 전체의 포트 구성은 다음과 같습니다.
+
+```
+petora-next    호스트 4000  →  컨테이너 3000    # Next.js
+petora-api     호스트 4010  →  컨테이너 4000    # GraphQL + WebSocket
+petora-batch   호스트 4011  →  컨테이너 4001    # 야간 랭킹 크론
+```
+
+### 서버 최초 배포
+
+```bash
+# 1. Docker Engine + Compose 플러그인이 설치되어 있어야 합니다
+git clone https://github.com/NBekhruzbek/petora-nest.git
+cd petora-nest
+
+# 2. .env 생성 — gitignore 대상이므로 새로 clone하면 존재하지 않습니다.
+#    7장의 템플릿을 운영 값으로 채워 넣으세요.
+nano .env
+
+# 3. 두 서비스 실행
+docker compose up -d
+
+# 4. 최초 빌드 확인 (npm install + nest build가 컨테이너 안에서 실행됩니다)
+docker compose logs -f petora-api
+```
+
+로그에 `MongoDB is connected into production DB`가 출력되면 API가 정상 기동한 것입니다 — `npm run start:prod`가 `NODE_ENV=production`을 설정하므로 [database.module.ts](apps/petora-api/src/database/database.module.ts)는 `MONGO_DEV` 대신 `MONGO_PROD`로 연결합니다.
+
+서버 `.env`에서 반드시 확인할 두 가지:
+
+- **`PORT_API=4000`, `PORT_BATCH=4001`** — 이 값은 Compose가 4010·4011로 공개하는 _컨테이너 내부_ 포트입니다. 변경하면 포트 매핑이 깨집니다.
+- **`MONGO_PROD`** — MongoDB는 compose 스택에 **포함되지 않습니다.** MongoDB Atlas 또는 직접 운영하는 DB 호스트를 지정하세요.
+
+### 재배포
+
+[deploy.sh](deploy.sh)가 재배포 원커맨드입니다.
+
+```bash
+./deploy.sh
+```
+
+`git reset --hard` → `git checkout main` → `git pull origin main` → `docker compose up -d` 순서로 실행되므로, 서버의 체크아웃이 `main`에서 벗어날 일이 없습니다. 다만 hard reset은 **서버 체크아웃의 커밋되지 않은 변경을 모두 버립니다** — 서버에서는 로컬 수정을 남겨 두지 마세요. `.env`와 `uploads/`는 gitignore 대상이므로 영향을 받지 않습니다.
+
+> **주의 — pull만으로는 새 코드가 반영되지 않습니다.** 소스는 바인드 마운트에 있고 `docker compose up -d`는 변경이 없는 서비스를 그대로 두므로(`Container petora-api is up-to-date`), Node 프로세스가 이전에 빌드된 `dist`를 계속 서빙합니다. 다시 빌드하려면 컨테이너를 재시작하세요.
+>
+> ```bash
+> docker compose restart          # npm install + build + start 재실행
+> ```
+
+### 운영 참고
+
+```bash
+docker compose ps                       # 컨테이너 상태
+docker compose logs -f petora-api       # API 로그 추적
+docker compose restart petora-batch     # 특정 서비스만 재빌드·재시작
+docker compose down                     # 두 컨테이너 중지 및 삭제
+docker compose exec petora-api bash     # 컨테이너 내부 셸
+```
+
+- **업로드 파일** — `uploads/`는 `/uploads` 경로로 정적 서빙되며 바인드 마운트를 통해 호스트에 저장되므로, 컨테이너를 다시 만들어도 이미지가 유지됩니다. gitignore 대상이므로 백업에 반드시 포함하세요.
+- **의존성** — 컨테이너는 시작할 때마다 마운트된 디렉터리에 `npm install`을 실행합니다. `node_modules/`가 호스트와 공유되므로 의존성 변경 후에는 재시작만으로 충분합니다.
+- **동시 빌드** — 두 서비스가 같은 마운트 디렉터리에서 동시에 빌드하며, API는 먼저 `dist`를 삭제합니다. 배치 컨테이너가 아직 다 쓰이지 않은 `dist`를 만나면, API 기동 후 `docker compose restart petora-batch`로 다시 올리세요.
+- **TLS·리버스 프록시는 이 저장소에 없습니다** — 컨테이너는 평문 HTTP 포트만 공개합니다. 도메인과 HTTPS는 앞단의 nginx 등으로 처리하세요. CORS는 `origin: true`이므로 API는 모든 오리진의 브라우저 요청을 허용합니다.
+- **GraphQL Playground가 프로덕션에서도 켜져 있습니다** ([app.module.ts](apps/petora-api/src/app.module.ts)의 `playground: true`). `/graphql`에서 전체 스키마가 외부에 공개되므로, 원하지 않으면 비활성화하세요.
+
+## 10. 프로젝트 구조
 
 ```
 petora-nest/
@@ -555,6 +705,8 @@ petora-nest/
 │   └── petora-batch/                # 야간 랭킹 크론 서버
 ├── scripts/                         # 일회성 데이터 마이그레이션 스크립트
 ├── uploads/                         # 업로드된 이미지 (정적 서빙)
+├── docker-compose.yml               # 프로덕션 컨테이너 (API + 배치)
+├── deploy.sh                        # main으로 리셋·pull 후 컨테이너 재시작
 └── package.json                     # 모노레포 스크립트 (API + 배치)
 ```
 
